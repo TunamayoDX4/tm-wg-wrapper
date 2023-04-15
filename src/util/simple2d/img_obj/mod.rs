@@ -6,10 +6,8 @@ use wgpu::{
     VertexStepMode, 
     BufferAddress, 
     vertex_attr_array, 
-    util::{DeviceExt, BufferInitDescriptor}, 
     RenderPipeline, 
     RenderPipelineDescriptor, 
-    BindGroup, 
 };
 use std::mem::size_of;
 use super::{
@@ -94,86 +92,39 @@ impl InstanceGen<ImgObjInstance> for ImgObjInstance {
     fn generate(&self) -> ImgObjInstance { *self }
 }
 
-/// 画像用レンダラで共有される値
+/// 画像を使ったオブジェクトの描画構造体で共有される値
 pub struct ImgObjRenderShared {
     pipeline: RenderPipeline, 
-    vertex_buffer: Buffer, 
-    index_buffer: Buffer, 
-    pub diffuse_bg_layout: BindGroupLayout, 
 }
 impl ImgObjRenderShared {
     pub fn new(
         gfx: &crate::ctx::gfx::GfxCtx, 
-        camera_bindgroup_layout: &BindGroupLayout, 
-    ) -> Result<Self, Box<dyn std::error::Error>> {
-        // シェーダー
+        camera: &super::Camera, 
+        image_shared: &super::ImagedShared, 
+    ) -> Self {
+        // シェーダモジュールの読み込み
         let shader = gfx.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
-                label: Some("image shader"),
+                label: Some("image shader"), 
                 source: wgpu::ShaderSource::Wgsl(
-                    include_str!("ferris_shooting_imgobj.wgsl").into(), 
-                ),
-            }
-        );
-        
-        // バーテックスバッファ
-        let vertex_buffer = gfx.device.create_buffer_init(
-            &BufferInitDescriptor { 
-                label: Some("vertex buffer"), 
-                contents: bytemuck::cast_slice(raw_param::VERTICES), 
-                usage: wgpu::BufferUsages::VERTEX 
+                    include_str!("imaged_object.wgsl").into(), 
+                )
             }
         );
 
-        // インデックスバッファ
-        let index_buffer = gfx.device.create_buffer_init(
-            &BufferInitDescriptor { 
-                label: Some("index buffer"), 
-                contents: bytemuck::cast_slice(raw_param::INDICES), 
-                usage: wgpu::BufferUsages::INDEX,  
-            }
-        );
-
-        // テクスチャ用のバインドグループレイアウト
-        let diffuse_bg_layout = gfx.device.create_bind_group_layout(
-            &wgpu::BindGroupLayoutDescriptor {
-                label: Some("diffuse bind group layout"),
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0, 
-                        visibility: wgpu::ShaderStages::FRAGMENT, 
-                        ty: wgpu::BindingType::Texture { 
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true }, 
-                            view_dimension: wgpu::TextureViewDimension::D2, 
-                            multisampled: false,  
-                        }, 
-                        count: None, 
-                    }, 
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1, 
-                        visibility: wgpu::ShaderStages::FRAGMENT, 
-                        ty: wgpu::BindingType::Sampler(
-                            wgpu::SamplerBindingType::Filtering, 
-                        ), 
-                        count: None, 
-                    }, 
-                ],
-            }
-        );
-
-        // パイプラインのレイアウト
+        // パイプラインレイアウトの初期化
         let pipeline_layout = gfx.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("pipeline layout"), 
                 bind_group_layouts: &[
-                    &diffuse_bg_layout, 
-                    &camera_bindgroup_layout, 
+                    &image_shared.diffuse, 
+                    &camera.bg_layout, 
                 ], 
                 push_constant_ranges: &[]
             }
         );
 
-        // パイプライン
+        // パイプラインの初期化
         let pipeline = gfx.device.create_render_pipeline(
             &RenderPipelineDescriptor {
                 label: Some("sample pipeline"), 
@@ -214,31 +165,9 @@ impl ImgObjRenderShared {
             }
         );
 
-        Ok(Self {
-            pipeline,
-            vertex_buffer,
-            index_buffer,
-            diffuse_bg_layout, 
-        })
-    }
-
-    pub fn rendering(
-        &self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
-        view: &wgpu::TextureView, 
-        encoder: &mut wgpu::CommandEncoder, 
-        camera_bg: &BindGroup, 
-        renderer: &mut ImgObjRender, 
-    ) {
-        renderer.rendering(
-            gfx, 
-            view, 
-            encoder, 
-            &self.pipeline, 
-            camera_bg, 
-            &self.vertex_buffer, 
-            &self.index_buffer
-        )
+        Self {
+            pipeline, 
+        }
     }
 }
 
@@ -324,4 +253,56 @@ impl ImgObjRender {
             0..self.instances.len() as _
         );
     }
+}
+impl super::Simple2DRender for ImgObjRender {
+    type Shared<'a> = (
+        &'a super::SquareShared, 
+        &'a super::ImagedShared, 
+        &'a ImgObjRenderShared, 
+    );
+
+    fn rendering<'a>(
+        &mut self, 
+        gfx: &crate::ctx::gfx::GfxCtx, 
+        encoder: &mut wgpu::CommandEncoder, 
+        view: &wgpu::TextureView, 
+        camera_bg: &wgpu::BindGroup, 
+        shared: Self::Shared<'a>, 
+    ) {
+        if let Some(buffer) = self.instances.gen_buffer(gfx) {
+            self.instance_buffer = buffer;
+        }
+
+        let mut render_pass = encoder.begin_render_pass(
+            &wgpu::RenderPassDescriptor {
+                label: Some("render pass"), 
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment { 
+                    view, 
+                    resolve_target: None, 
+                    ops: wgpu::Operations { 
+                        load: wgpu::LoadOp::Load, 
+                        store: true 
+                    } 
+                })], 
+                depth_stencil_attachment: None, 
+            }
+        );
+
+        render_pass.set_pipeline(&shared.2.pipeline);
+        render_pass.set_bind_group(0, &self.texture.bind_group, &[]);
+        render_pass.set_bind_group(1, camera_bg, &[]);
+        render_pass.set_vertex_buffer(
+            0, shared.0.vertex.slice(..)
+        );
+        render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
+        render_pass.set_index_buffer(
+            shared.0.index.slice(..), wgpu::IndexFormat::Uint16
+        );
+        render_pass.draw_indexed(
+            0..raw_param::INDICES.len() as _, 
+            0, 
+            0..self.instances.len() as _
+        );
+    }
+    
 }

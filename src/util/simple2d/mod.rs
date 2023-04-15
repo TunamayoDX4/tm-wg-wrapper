@@ -6,12 +6,41 @@ pub mod types;
 pub mod img_obj;
 pub mod img_tile;
 
+/// シンプルな2Dレンダラー
+pub trait Simple2DRender: Send + Sync + Sized + 'static {
+    type Shared<'a>: Send + Sync + Sized;
+    fn rendering<'a>(
+        &mut self, 
+        gfx: &crate::ctx::gfx::GfxCtx, 
+        encoder: &mut wgpu::CommandEncoder, 
+        view: &wgpu::TextureView, 
+        camera_bg: &wgpu::BindGroup, 
+        shared: Self::Shared<'a>, 
+    );
+}
+
+/// 長方形描画のレンダラで共有される値
+pub struct SquareShared {
+    pub vertex: wgpu::Buffer, 
+    pub index: wgpu::Buffer, 
+}
+impl SquareShared {
+}
+
+/// 画像描画のレンダラで共有される値
+pub struct ImagedShared {
+    pub diffuse: wgpu::BindGroupLayout, 
+}
+impl ImagedShared {
+}
+
 /// カメラ
 pub struct Camera {
     pub camera: types::Camera, 
     raw: raw_param::CameraRaw, 
     buffer: wgpu::Buffer, 
     bg: wgpu::BindGroup, 
+    pub bg_layout: wgpu::BindGroupLayout, 
 }
 impl Camera {
     pub fn new(
@@ -69,6 +98,7 @@ impl Camera {
             raw,
             buffer,
             bg,
+            bg_layout, 
         }
 
     }
