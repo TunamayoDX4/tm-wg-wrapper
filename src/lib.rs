@@ -18,6 +18,7 @@ pub mod prelude {
 
     pub use crate::ctx::{
         Context, 
+        frame::Frame, 
         gfx::{
             GfxCtx, 
             Renderer, 
