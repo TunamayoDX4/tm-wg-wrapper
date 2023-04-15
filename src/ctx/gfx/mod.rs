@@ -141,7 +141,7 @@ impl GfxCtx {
         let view = output.texture.create_view(&Default::default());
         
         // チェーンを返す
-        Ok(RenderingChain { ctx: self, output, view })
+        Ok(RenderingChain { gfx: self, output, view })
     }
 }
 
@@ -151,13 +151,13 @@ pub trait Renderer {
         &mut self, 
         output: &SurfaceTexture, 
         view: &TextureView, 
-        ctx: &GfxCtx, 
+        gfx: &GfxCtx, 
     );
 }
 
 /// 描画先を保持して描画するためのチェーン
 pub struct RenderingChain<'a> {
-    ctx: &'a GfxCtx, 
+    gfx: &'a GfxCtx, 
     output: SurfaceTexture, 
     view: TextureView, 
 }
@@ -171,7 +171,7 @@ impl<'a> RenderingChain<'a> {
         renderer.rendering(
             &self.output, 
             &self.view, 
-            self.ctx
+            self.gfx, 
         );
         self
     }
