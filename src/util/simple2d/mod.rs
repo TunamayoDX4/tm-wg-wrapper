@@ -1,5 +1,3 @@
-use wgpu::util::DeviceExt;
-
 pub mod raw_param;
 pub mod types;
 
@@ -25,6 +23,34 @@ pub struct SquareShared {
     pub index: wgpu::Buffer, 
 }
 impl SquareShared {
+    pub fn new(
+        gfx: &crate::ctx::gfx::GfxCtx, 
+    ) -> Self {
+        use wgpu::util::DeviceExt;
+
+        // バーテックスバッファ
+        let vertex = gfx.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor { 
+                label: Some("vertex buffer"), 
+                contents: bytemuck::cast_slice(raw_param::VERTICES), 
+                usage: wgpu::BufferUsages::VERTEX 
+            }
+        );
+
+        // インデックスバッファ
+        let index = gfx.device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor { 
+                label: Some("index buffer"), 
+                contents: bytemuck::cast_slice(raw_param::INDICES), 
+                usage: wgpu::BufferUsages::INDEX,  
+            }
+        );
+
+        Self {
+            vertex, 
+            index, 
+        }
+    }
 }
 
 /// 画像描画のレンダラで共有される値
@@ -32,6 +58,38 @@ pub struct ImagedShared {
     pub diffuse: wgpu::BindGroupLayout, 
 }
 impl ImagedShared {
+    pub fn new(
+        gfx: &crate::ctx::gfx::GfxCtx, 
+    ) -> Self {
+        // テクスチャ用のバインドグループレイアウト
+        let diffuse = gfx.device.create_bind_group_layout(
+            &wgpu::BindGroupLayoutDescriptor {
+                label: Some("diffuse bind group layout"),
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0, 
+                        visibility: wgpu::ShaderStages::FRAGMENT, 
+                        ty: wgpu::BindingType::Texture { 
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true }, 
+                            view_dimension: wgpu::TextureViewDimension::D2, 
+                            multisampled: false,  
+                        }, 
+                        count: None, 
+                    }, 
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1, 
+                        visibility: wgpu::ShaderStages::FRAGMENT, 
+                        ty: wgpu::BindingType::Sampler(
+                            wgpu::SamplerBindingType::Filtering, 
+                        ), 
+                        count: None, 
+                    }, 
+                ],
+            }
+        );
+
+        Self { diffuse }
+    }
 }
 
 /// カメラ
@@ -47,6 +105,7 @@ impl Camera {
         camera: types::Camera, 
         gfx: &crate::ctx::gfx::GfxCtx, 
     ) -> Self {
+        use wgpu::util::DeviceExt;
 
         // 生のカメラ
         let raw = camera.as_raw();
