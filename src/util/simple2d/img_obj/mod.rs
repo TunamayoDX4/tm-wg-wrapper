@@ -209,49 +209,6 @@ impl ImgObjRender {
     ) {
         self.instances.modify(instances, &self.texture)
     }
-
-    /// 描画
-    pub fn rendering(
-        &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx,
-        view: &wgpu::TextureView, 
-        encoder: &mut wgpu::CommandEncoder, 
-        pipeline: &wgpu::RenderPipeline, 
-        camera_bg: &wgpu::BindGroup, 
-        vb: &wgpu::Buffer, 
-        ib: &wgpu::Buffer, 
-    ) {
-        if let Some(buffer) = self.instances.gen_buffer(gfx) {
-            self.instance_buffer = buffer;
-        }
-
-        let mut render_pass = encoder.begin_render_pass(
-            &wgpu::RenderPassDescriptor {
-                label: Some("render pass"), 
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment { 
-                    view, 
-                    resolve_target: None, 
-                    ops: wgpu::Operations { 
-                        load: wgpu::LoadOp::Load, 
-                        store: true 
-                    } 
-                })], 
-                depth_stencil_attachment: None, 
-            }
-        );
-
-        render_pass.set_pipeline(pipeline);
-        render_pass.set_bind_group(0, &self.texture.bind_group, &[]);
-        render_pass.set_bind_group(1, camera_bg, &[]);
-        render_pass.set_vertex_buffer(0, vb.slice(..));
-        render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-        render_pass.set_index_buffer(ib.slice(..), wgpu::IndexFormat::Uint16);
-        render_pass.draw_indexed(
-            0..raw_param::INDICES.len() as _, 
-            0, 
-            0..self.instances.len() as _
-        );
-    }
 }
 impl super::Simple2DRender for ImgObjRender {
     type Shared<'a> = (
