@@ -1,6 +1,5 @@
 use wgpu::{
     Buffer, 
-    BindGroupLayout, 
     VertexAttribute, 
     VertexBufferLayout, 
     VertexStepMode, 
@@ -180,13 +179,13 @@ pub struct ImgObjRender {
 impl ImgObjRender {
     pub fn new(
         gfx: &crate::ctx::gfx::GfxCtx, 
-        bind_group_layout: &BindGroupLayout, 
+        imaged_shared: &super::ImagedShared, 
         texture: impl AsRef<std::path::Path>, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // テクスチャのロード
         let texture = types::Texture::new(
             gfx, 
-            bind_group_layout, 
+            &imaged_shared.diffuse, 
             texture, 
         )?;
 
