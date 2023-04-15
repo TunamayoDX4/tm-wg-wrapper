@@ -59,6 +59,7 @@ pub struct ImgObjInstance {
     pub rotation: f32, 
     pub tex_coord: [f32; 2], 
     pub tex_size: [f32; 2], 
+    pub tex_rev: [bool; 2], 
 }
 impl Instance for ImgObjInstance {
     type Raw = ImgObjInstanceRaw;
@@ -72,10 +73,14 @@ impl Instance for ImgObjInstance {
             self.rotation.sin(), 
         ];
         let tex_coord = std::array::from_fn(|i|
-            self.tex_coord[i] / v.texture_size[i]
+            self.tex_coord[i] / v.texture_size[i] + if self.tex_rev[i] {
+                self.tex_size[i] / v.texture_size[i]
+            } else {
+                0.
+            }
         );
         let tex_size = std::array::from_fn(|i|
-            self.tex_size[i] / v.texture_size[i]
+            self.tex_size[i] / v.texture_size[i] * if self.tex_rev[i] { -1. } else { 1. }
         );
 
         ImgObjInstanceRaw { 
