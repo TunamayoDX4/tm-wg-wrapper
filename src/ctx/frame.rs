@@ -35,6 +35,10 @@ pub trait Frame: Sized + Send + Sync + 'static {
         &mut self, 
         delta: MouseScrollDelta, 
     );
+    fn window_resizing(
+        &mut self, 
+        size: winit::dpi::PhysicalSize<u32>, 
+    );
     fn rendering<'r>(
         &mut self, 
         render_chain: super::gfx::RenderingChain<'r>, 

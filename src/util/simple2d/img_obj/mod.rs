@@ -98,7 +98,7 @@ pub struct ImgObjRenderShared {
 impl ImgObjRenderShared {
     pub fn new(
         gfx: &crate::ctx::gfx::GfxCtx, 
-        camera: &super::Camera, 
+        camera: &super::S2DCamera, 
         image_shared: &super::ImagedShared, 
     ) -> Self {
         // シェーダモジュールの読み込み
@@ -222,7 +222,7 @@ impl super::Simple2DRender for ImgObjRender {
         gfx: &crate::ctx::gfx::GfxCtx, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
-        camera_bg: &wgpu::BindGroup, 
+        camera: &super::S2DCamera, 
         shared: Self::Shared<'a>, 
     ) {
         if let Some(buffer) = self.instances.gen_buffer(gfx) {
@@ -246,7 +246,7 @@ impl super::Simple2DRender for ImgObjRender {
 
         render_pass.set_pipeline(&shared.2.pipeline);
         render_pass.set_bind_group(0, &self.texture.bind_group, &[]);
-        render_pass.set_bind_group(1, camera_bg, &[]);
+        render_pass.set_bind_group(1, &camera.bg, &[]);
         render_pass.set_vertex_buffer(
             0, shared.0.vertex.slice(..)
         );

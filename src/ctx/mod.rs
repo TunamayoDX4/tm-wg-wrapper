@@ -89,6 +89,10 @@ impl<F: frame::Frame> Context<F> {
                         button, 
                         .. 
                     } => self.frame.input_mouse_button(button, state), 
+                    WindowEvent::Resized(new_size) => {
+                        self.gfx.reconfigure(Some(new_size));
+                        self.frame.window_resizing(new_size);
+                    }, 
                     _ => {}, 
                 }, 
                 Event::DeviceEvent { 
@@ -110,7 +114,7 @@ impl<F: frame::Frame> Context<F> {
                     Ok(
                         render_chain
                     ) => self.frame.rendering(render_chain).present(), 
-                    Err(wgpu::SurfaceError::Lost) => self.gfx.reconfigure(), 
+                    Err(wgpu::SurfaceError::Lost) => self.gfx.reconfigure(None), 
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         eprintln!("out of memory error occured.");
                         ctrl.set_exit_with_code(-1)

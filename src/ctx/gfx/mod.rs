@@ -113,14 +113,19 @@ impl GfxCtx {
     /// 再設定
     pub fn reconfigure(
         &mut self, 
+        new_size: Option<winit::dpi::PhysicalSize<u32>>, 
     ) {
         // ウィンドウの大きさを得る
-        let inner_size = self.window.inner_size();
+        let recfg_size = if let Some(new_size) = new_size {
+            new_size
+        } else {
+            self.window.inner_size()
+        };
 
         // ウィンドウ内部の面積がゼロでなければウィンドウサイズの調整処理をする
-        if inner_size.width != 0 && inner_size.height != 0 {
-            self.config.width = inner_size.width;
-            self.config.height = inner_size.height;
+        if recfg_size.width != 0 && recfg_size.height != 0 {
+            self.config.width = recfg_size.width;
+            self.config.height = recfg_size.height;
         }
 
         // 設定処理の実行

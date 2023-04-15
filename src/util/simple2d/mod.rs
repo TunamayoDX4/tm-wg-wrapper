@@ -12,7 +12,7 @@ pub trait Simple2DRender: Send + Sync + Sized + 'static {
         gfx: &crate::ctx::gfx::GfxCtx, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
-        camera_bg: &wgpu::BindGroup, 
+        camera: &S2DCamera, 
         shared: Self::Shared<'a>, 
     );
 }
@@ -93,14 +93,14 @@ impl ImagedShared {
 }
 
 /// カメラ
-pub struct Camera {
+pub struct S2DCamera {
     pub camera: types::Camera, 
     raw: raw_param::CameraRaw, 
     buffer: wgpu::Buffer, 
     bg: wgpu::BindGroup, 
     pub bg_layout: wgpu::BindGroupLayout, 
 }
-impl Camera {
+impl S2DCamera {
     pub fn new(
         camera: types::Camera, 
         gfx: &crate::ctx::gfx::GfxCtx, 
