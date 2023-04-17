@@ -48,7 +48,7 @@ impl TextRendererInner {
 
     pub fn rendering <'a, S: 'a> (
         &mut self, 
-        gfx: crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         sections: impl IntoIterator<Item = S>, 
@@ -93,7 +93,7 @@ impl TextRenderer {
 
     pub fn rendering <'a, S: 'a> (
         &mut self, 
-        gfx: crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         sections: impl IntoIterator<Item = S>, 
