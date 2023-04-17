@@ -1,6 +1,8 @@
 pub mod raw_param;
 pub mod types;
 
+pub mod entity_holder;
+
 pub mod img_obj;
 pub mod img_tile;
 
