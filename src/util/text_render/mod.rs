@@ -22,11 +22,11 @@ impl TextRendererGMArc {
 }
 
 /// テキスト用レンダラ
-pub struct TextRenderer {
+pub struct TextRendererInner {
     staging_belt: wgpu::util::StagingBelt, 
     glyph: TextRendererGMArc, 
 }
-impl TextRenderer {
+impl TextRendererInner {
     pub fn new(
         glyph: TextRendererGMArc, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -70,5 +70,36 @@ impl TextRenderer {
         ).expect("text draw queued");
 
         self.staging_belt.finish();
+    }
+}
+
+/// テキスト用レンダラ
+pub struct TextRenderer(std::sync::Arc<parking_lot::Mutex<TextRendererInner>>);
+impl TextRenderer {
+    pub fn new(
+        glyph: TextRendererGMArc, 
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let inner = TextRendererInner::new(glyph)?;
+        Ok(Self(std::sync::Arc::new(parking_lot::Mutex::new(inner))))
+    }
+
+    pub fn set_glyph(&mut self, glyph: TextRendererGMArc) {
+        self.0.lock().set_glyph(glyph)
+    }
+
+    pub fn get_glyph(&self) -> TextRendererGMArc {
+        self.0.lock().get_glyph()
+    }
+
+    pub fn rendering <'a, S: 'a> (
+        &mut self, 
+        gfx: crate::ctx::gfx::GfxCtx, 
+        encoder: &mut wgpu::CommandEncoder, 
+        view: &wgpu::TextureView, 
+        sections: impl IntoIterator<Item = S>, 
+    ) where
+        S: Into<std::borrow::Cow<'a, wgpu_glyph::Section<'a>>>, 
+    {
+        self.0.lock().rendering(gfx, encoder, view, sections)
     }
 }
