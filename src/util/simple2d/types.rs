@@ -1,16 +1,55 @@
 use std::io::Read;
 use wgpu::BindGroup;
 
+/// 視認可能な範囲
+pub struct VisibleField {
+    cam_pos: nalgebra::Point2<f32>, 
+    cam_res: nalgebra::Vector2<f32>, 
+}
+impl VisibleField {
+    pub fn new(
+        camera: &Camera, 
+    ) -> Self { Self {
+        cam_pos: camera.position, 
+        cam_res: camera.size, 
+    }}
+
+    pub fn in_visible<P, S>(
+        &self, 
+        pos: P, 
+        size: S, 
+    ) -> bool where
+        nalgebra::Point2<f32>: From<P>, 
+        nalgebra::Vector2<f32>: From<S>, 
+    {
+        let distance: nalgebra::Vector2<f32> = (nalgebra::Point2::from(pos) - self.cam_pos).abs();
+        let diff: nalgebra::Vector2<f32> = self.cam_res * 0.5 + nalgebra::Vector2::from(size);
+        distance <= diff
+    }
+
+    pub fn visible_area(&self) -> [nalgebra::Point2<f32>; 2] { [
+        self.cam_pos - self.cam_res * 0.5, 
+        self.cam_pos + self.cam_res * 0.5, 
+    ]}
+
+    pub fn visible_edge(&self) -> [nalgebra::Point2<f32>; 4] { [
+        self.cam_pos + nalgebra::Vector2::new(-self.cam_res.x, -self.cam_res.y) * 0.5, 
+        self.cam_pos + nalgebra::Vector2::new(self.cam_res.x, -self.cam_res.y) * 0.5, 
+        self.cam_pos + nalgebra::Vector2::new(-self.cam_res.x, self.cam_res.y) * 0.5, 
+        self.cam_pos + nalgebra::Vector2::new(self.cam_res.x, self.cam_res.y) * 0.5, 
+    ]}
+}
+
 /// カメラ
 pub struct Camera {
-    pub position: [f32; 2], 
-    pub size: [f32; 2], 
+    pub position: nalgebra::Point2<f32>, 
+    pub size: nalgebra::Vector2<f32>, 
     pub zoom: f32, 
     pub rotation: f32, 
 }
 impl Camera {
     pub fn as_raw(&self) -> super::raw_param::CameraRaw {
-        let position = self.position;
+        let position = self.position.into();
         let size = std::array::from_fn(
             |i| (self.size[i] * 0.5).recip() * self.zoom
         );
