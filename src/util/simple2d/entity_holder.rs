@@ -9,8 +9,8 @@ use super::{
 };
 
 /// 単一エンティティホルダ
-pub struct EntityHolder<T: InstanceGen<ImgObjInstance> + std::fmt::Debug> (Option<T>);
-impl<T: InstanceGen<ImgObjInstance> + std::fmt::Debug> EntityHolder<T> {
+pub struct EntityHolder<T: InstanceGen<ImgObjInstance>> (Option<T>);
+impl<T: InstanceGen<ImgObjInstance>> EntityHolder<T> {
     pub fn new(
         initializer: impl Into<T>, 
     ) -> Self { Self (
