@@ -56,22 +56,32 @@ impl<T: InstanceGen<ImgObjInstance>> EntityHolder<T> {
 
 /// エンティティ配列
 pub struct EntityArray<T: InstanceGen<ImgObjInstance>> {
+    len: usize, 
     entity: Vec<Option<T>>, 
     remove_queue: VecDeque<usize>, 
 }
 impl<T: InstanceGen<ImgObjInstance>>  EntityArray<T> {
     pub fn new(
         initializer: impl IntoIterator<Item = T>, 
-    ) -> Self { Self {
-        entity: initializer.into_iter().map(|i| Some(i)).collect(), 
-        remove_queue: VecDeque::new(), 
-    }}
+    ) -> Self { 
+        let mut len = 0;
+        let entity = initializer.into_iter().map(|i| {
+            len += 1;
+            Some(i)
+        }).collect();
+        Self {
+            len, 
+            entity, 
+            remove_queue: VecDeque::new(), 
+        }
+    }
 
     pub fn remove(&mut self, idx: usize) {
         if let Some(_) = self.entity.get_mut(idx)
             .map(|e| e.take())
             .flatten() 
         {
+            self.len -= 1;
             self.remove_queue.push_back(idx);
         }
     }
@@ -94,6 +104,7 @@ impl<T: InstanceGen<ImgObjInstance>>  EntityArray<T> {
                 _ => None, 
             })
             .for_each(|(e, idx)| {
+                self.len -= 1;
                 count += 1;
                 *e = None;
                 self.remove_queue.push_back(idx)
@@ -102,6 +113,7 @@ impl<T: InstanceGen<ImgObjInstance>>  EntityArray<T> {
     }
 
     pub fn push(&mut self, entity: T) {
+        self.len += 1;
         while let Some(idx) = self.remove_queue.pop_front() {
             match self.entity.get_mut(idx) {
                 e @ Some(None) => {
@@ -158,4 +170,6 @@ impl<T: InstanceGen<ImgObjInstance>>  EntityArray<T> {
             .enumerate()
             .filter_map(|(idx, e)| e.as_mut().map(|e| (idx, e)))
     }
+
+    pub fn len(&self) -> usize { self.len }
 }
