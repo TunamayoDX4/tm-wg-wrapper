@@ -31,7 +31,6 @@ impl<I: super::types::Instance> RawInstanceArray<I> {
         v: &I::Arv, 
     ) {
         self.modified = true;
-        self.instances.clear();
         instances
             .map(|i| i.generate().as_raw(v))
             .for_each(|i| self.instances.push(i));
@@ -43,13 +42,15 @@ impl<I: super::types::Instance> RawInstanceArray<I> {
     ) -> Option<wgpu::Buffer> {
         if self.modified {
             self.modified = false;
-            Some(gfx.device.create_buffer_init(
+            let r = Some(gfx.device.create_buffer_init(
                 &wgpu::util::BufferInitDescriptor {
                     label: Some("instance buffer"), 
                     contents: bytemuck::cast_slice(self.instances.as_slice()), 
                     usage: wgpu::BufferUsages::VERTEX, 
                 }
-            ))
+            ));
+            self.instances.clear();
+            r
         } else {
             None
         }
