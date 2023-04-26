@@ -198,7 +198,7 @@ impl ImgTileRender {
     }
 
     /// インスタンスの更新
-    pub fn update_instances<'a, T: InstanceGen<ImgTileInstance>>(
+    pub fn update_instances<'a, T: InstanceGen<ImgTileInstance> + 'a>(
         &mut self, 
         instances: impl Iterator<Item = &'a T>, 
     ) {

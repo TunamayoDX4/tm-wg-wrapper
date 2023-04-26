@@ -169,7 +169,7 @@ impl Texture {
 }
 
 /// インスタンスを生成しうる構造体
-pub trait InstanceGen<I: Instance>: Send + Sync + 'static {
+pub trait InstanceGen<I: Instance>: Send + Sync {
     fn generate(&self) -> I;
 }
 

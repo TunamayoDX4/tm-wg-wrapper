@@ -208,7 +208,7 @@ impl ImgObjRender {
     }
 
     /// インスタンスの更新
-    pub fn update_instances<'a, T: InstanceGen<ImgObjInstance>>(
+    pub fn update_instances<'a, T: InstanceGen<ImgObjInstance> + 'a>(
         &mut self, 
         instances: impl Iterator<Item = &'a T>, 
     ) {

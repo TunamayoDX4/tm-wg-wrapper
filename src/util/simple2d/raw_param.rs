@@ -25,12 +25,13 @@ impl<I: super::types::Instance> RawInstanceArray<I> {
         instances: Vec::new(), 
     } }
 
-    pub fn modify<'a, T: super::types::InstanceGen<I>>(
+    pub fn modify<'a, T: super::types::InstanceGen<I> + 'a>(
         &mut self, 
         instances: impl Iterator<Item = &'a T>, 
         v: &I::Arv, 
     ) {
         self.modified = true;
+        self.instances.clear();
         instances
             .map(|i| i.generate().as_raw(v))
             .for_each(|i| self.instances.push(i));
@@ -42,15 +43,13 @@ impl<I: super::types::Instance> RawInstanceArray<I> {
     ) -> Option<wgpu::Buffer> {
         if self.modified {
             self.modified = false;
-            let r = Some(gfx.device.create_buffer_init(
+            Some(gfx.device.create_buffer_init(
                 &wgpu::util::BufferInitDescriptor {
                     label: Some("instance buffer"), 
                     contents: bytemuck::cast_slice(self.instances.as_slice()), 
                     usage: wgpu::BufferUsages::VERTEX, 
                 }
-            ));
-            self.instances.clear();
-            r
+            ))
         } else {
             None
         }
