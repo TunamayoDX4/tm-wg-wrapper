@@ -112,18 +112,20 @@ impl<T: InstanceGen<ImgObjInstance>>  EntityArray<T> {
         count
     }
 
-    pub fn push(&mut self, entity: T) {
+    pub fn push(&mut self, entity: T) -> usize {
         self.len += 1;
         while let Some(idx) = self.remove_queue.pop_front() {
             match self.entity.get_mut(idx) {
                 e @ Some(None) => {
                     *e.unwrap() = Some(entity);
-                    return;
+                    return idx;
                 }, 
                 None | Some(Some(_)) => {}, 
             }
         };
-        self.entity.push(Some(entity))
+        let idx = self.entity.len();
+        self.entity.push(Some(entity));
+        idx
     }
 
     pub fn render_update(
