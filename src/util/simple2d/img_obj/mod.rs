@@ -224,7 +224,7 @@ impl ImgObjRender {
     /// インスタンスの更新
     pub fn push_instance<'a, T: InstanceGen<ImgObjInstance> + 'a>(
         &mut self, 
-        instance: T, 
+        instance: &T, 
     ) {
         instance.generate(&mut self.instances);
     }
