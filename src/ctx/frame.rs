@@ -14,6 +14,7 @@ pub trait Frame: Sized + Send + Sync + 'static {
     fn window_builder() -> winit::window::WindowBuilder;
     fn new(
         initializer: Self::Initializer, 
+        window: &winit::window::Window, 
         gfx: &super::gfx::GfxCtx, 
         sfx: &super::sfx::SfxCtx, 
     ) -> Result<Self, Box<dyn std::error::Error>>;

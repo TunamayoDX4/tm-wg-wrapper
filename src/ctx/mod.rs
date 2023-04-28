@@ -46,6 +46,7 @@ impl<F: frame::Frame> Context<F> {
         // フレームの初期化
         let frame = F::new(
             frame_initializer, 
+            &window, 
             &gfx, 
             &sfx, 
         )?;
