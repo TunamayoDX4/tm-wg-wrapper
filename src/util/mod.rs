@@ -1,4 +1,5 @@
 pub mod cycle_measure;
+pub mod control;
 
 pub mod simple2d_old;
 pub mod simple2d;
