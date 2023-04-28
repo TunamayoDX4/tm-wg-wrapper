@@ -1,6 +1,7 @@
 use std::io::Read;
+use wgpu::BindGroup;
 
-/// 描画が行われる領域
+/// 視認可能な範囲
 pub struct VisibleField {
     cam_pos: nalgebra::Point2<f32>, 
     cam_res: nalgebra::Vector2<f32>, 
@@ -39,7 +40,7 @@ impl VisibleField {
     ]}
 }
 
-/// 2Dカメラ
+/// カメラ
 pub struct Camera {
     pub position: nalgebra::Point2<f32>, 
     pub size: nalgebra::Vector2<f32>, 
@@ -47,7 +48,7 @@ pub struct Camera {
     pub rotation: f32, 
 }
 impl Camera {
-    pub fn as_raw(&self) -> super::raw::CameraRaw {
+    pub fn as_raw(&self) -> super::raw_param::CameraRaw {
         let position = self.position.into();
         let size = std::array::from_fn(
             |i| (self.size[i] * 0.5).recip() * self.zoom
@@ -56,19 +57,19 @@ impl Camera {
             (-self.rotation).cos(), 
             (-self.rotation).sin(), 
         ];
-        super::raw::CameraRaw {
-            position,
-            size,
-            rotation,
-            _dummy: Default::default(),
+        super::raw_param::CameraRaw { 
+            position, 
+            size, 
+            rotation, 
+            _dummy: Default::default() 
         }
     }
 }
 
 /// テクスチャ
 pub struct Texture {
-    pub bind_group: wgpu::BindGroup, 
-    pub texture_size: nalgebra::Vector2<f32>, 
+    pub bind_group: BindGroup, 
+    pub texture_size: [f32; 2], 
 }
 impl Texture {
     pub fn new(
@@ -162,7 +163,19 @@ impl Texture {
 
         Ok(Self { 
             bind_group: diffuse_bind_group, 
-            texture_size: [dimensions.0 as f32, dimensions.1 as f32].into(), 
+            texture_size: [dimensions.0 as f32, dimensions.1 as f32], 
         })
     }
+}
+
+/// インスタンスを生成しうる構造体
+pub trait InstanceGen<I: Instance>: Send + Sync {
+    fn generate(&self) -> I;
+}
+
+/// インスタンス
+pub trait Instance: InstanceGen<Self> + Send + Sync + Sized + Copy {
+    type Raw: super::raw_param::InstanceRaw;
+    type Arv;
+    fn as_raw(&self, v: &Self::Arv) -> Self::Raw;
 }

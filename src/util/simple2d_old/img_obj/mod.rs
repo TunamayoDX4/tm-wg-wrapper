@@ -10,23 +10,15 @@ use wgpu::{
 };
 use std::mem::size_of;
 use super::{
-    instance::{
+    types::{
+        self, 
         Instance, 
         InstanceGen, 
+    }, 
+    raw_param::{
+        self, 
         InstanceRaw, 
-        buffer::{
-            InstanceArray, 
-        }, 
-    }, 
-    shared::{
-        S2DCamera, 
-        ImagedShared, 
-        SquareShared, 
-    }, 
-    types::Texture, 
-    raw::{
-        TexedVertex, 
-        INDICES, 
+        RawInstanceArray, 
     }, 
 };
 
@@ -71,9 +63,9 @@ pub struct ImgObjInstance {
 }
 impl Instance for ImgObjInstance {
     type Raw = ImgObjInstanceRaw;
-    type T = Texture;
+    type Arv = types::Texture;
 
-    fn as_raw(self, value: &Self::T) -> Self::Raw {
+    fn as_raw(&self, v: &Self::Arv) -> Self::Raw {
         let position = self.position;
         let size = self.size;
         let rotation = [
@@ -81,14 +73,14 @@ impl Instance for ImgObjInstance {
             self.rotation.sin(), 
         ];
         let tex_coord = std::array::from_fn(|i|
-            self.tex_coord[i] / value.texture_size[i] + if self.tex_rev[i] {
-                self.tex_size[i] / value.texture_size[i]
+            self.tex_coord[i] / v.texture_size[i] + if self.tex_rev[i] {
+                self.tex_size[i] / v.texture_size[i]
             } else {
                 0.
             }
         );
         let tex_size = std::array::from_fn(|i|
-            self.tex_size[i] / value.texture_size[i] * if self.tex_rev[i] { -1. } else { 1. }
+            self.tex_size[i] / v.texture_size[i] * if self.tex_rev[i] { -1. } else { 1. }
         );
 
         ImgObjInstanceRaw { 
@@ -99,15 +91,9 @@ impl Instance for ImgObjInstance {
             tex_size 
         }
     }
-    
 }
 impl InstanceGen<ImgObjInstance> for ImgObjInstance {
-    fn generate(
-        &self, 
-        instances: &mut super::instance::buffer::InstanceArray<ImgObjInstance>, 
-    ) {
-        instances.push(*self)
-    }
+    fn generate(&self) -> ImgObjInstance { *self }
 }
 
 /// 画像を使ったオブジェクトの描画構造体で共有される値
@@ -117,8 +103,8 @@ pub struct ImgObjRenderShared {
 impl ImgObjRenderShared {
     pub fn new(
         gfx: &crate::ctx::gfx::GfxCtx, 
-        camera: &S2DCamera, 
-        image_shared: &ImagedShared, 
+        camera: &super::S2DCamera, 
+        image_shared: &super::ImagedShared, 
     ) -> Self {
         // シェーダモジュールの読み込み
         let shader = gfx.device.create_shader_module(
@@ -151,7 +137,7 @@ impl ImgObjRenderShared {
                     module: &shader, 
                     entry_point: "vs_main", 
                     buffers: &[
-                        TexedVertex::desc(), 
+                        raw_param::Vertex::desc(), 
                         ImgObjInstanceRaw::desc(), 
                     ], 
                 }, 
@@ -191,28 +177,28 @@ impl ImgObjRenderShared {
 
 /// 画像用レンダラ
 pub struct ImgObjRender {
-    texture: Texture, 
-    instances: InstanceArray<ImgObjInstance>, 
+    texture: types::Texture, 
+    instances: RawInstanceArray<ImgObjInstance>, 
     instance_buffer: Buffer, 
 }
 impl ImgObjRender {
     pub fn new(
         gfx: &crate::ctx::gfx::GfxCtx, 
-        imaged_shared: &ImagedShared, 
+        imaged_shared: &super::ImagedShared, 
         texture: impl AsRef<std::path::Path>, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // テクスチャのロード
-        let texture = Texture::new(
+        let texture = types::Texture::new(
             gfx, 
             &imaged_shared.diffuse, 
             texture, 
         )?;
 
         // インスタンスの生成
-        let mut instances = InstanceArray::new();
+        let mut instances = RawInstanceArray::new();
 
         // インスタンスバッファの初期化
-        let instance_buffer = instances.finish(gfx, &texture);
+        let instance_buffer = instances.gen_buffer(gfx).unwrap();
 
         Ok(Self {
             texture, 
@@ -222,17 +208,17 @@ impl ImgObjRender {
     }
 
     /// インスタンスの更新
-    pub fn push_instance<'a, T: InstanceGen<ImgObjInstance> + 'a>(
+    pub fn update_instances<'a, T: InstanceGen<ImgObjInstance> + 'a>(
         &mut self, 
-        instance: T, 
+        instances: impl Iterator<Item = &'a T>, 
     ) {
-        instance.generate(&mut self.instances);
+        self.instances.modify(instances, &self.texture)
     }
 }
 impl super::Simple2DRender for ImgObjRender {
     type Shared<'a> = (
-        &'a SquareShared, 
-        &'a ImagedShared, 
+        &'a super::SquareShared, 
+        &'a super::ImagedShared, 
         &'a ImgObjRenderShared, 
     );
 
@@ -241,13 +227,12 @@ impl super::Simple2DRender for ImgObjRender {
         gfx: &crate::ctx::gfx::GfxCtx, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
-        camera: &S2DCamera, 
+        camera: &super::S2DCamera, 
         shared: Self::Shared<'a>, 
     ) {
-        self.instance_buffer = self.instances.finish(
-            gfx, 
-            &self.texture
-        );
+        if let Some(buffer) = self.instances.gen_buffer(gfx) {
+            self.instance_buffer = buffer;
+        }
 
         let mut render_pass = encoder.begin_render_pass(
             &wgpu::RenderPassDescriptor {
@@ -275,7 +260,7 @@ impl super::Simple2DRender for ImgObjRender {
             shared.0.index.slice(..), wgpu::IndexFormat::Uint16
         );
         render_pass.draw_indexed(
-            0..INDICES.len() as _, 
+            0..raw_param::INDICES.len() as _, 
             0, 
             0..self.instances.len() as _
         );

@@ -162,16 +162,31 @@ impl<T: InstanceGen<ImgObjInstance>>  EntityArray<T> {
             .map(|t| f(t))
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (usize, &T)> {
+    pub fn iter(&self) -> impl Iterator<Item = EntArrRef<T>> {
         self.entity.iter()
             .enumerate()
-            .filter_map(|(idx, e)| e.as_ref().map(|e| (idx, e)))
+            .filter_map(|(idx, e)| 
+                e.as_ref().map(|e| EntArrRef { idx, entity: e })
+            )
     }
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = (usize, &mut T)> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = EntArrRefMut<T>> {
         self.entity.iter_mut()
             .enumerate()
-            .filter_map(|(idx, e)| e.as_mut().map(|e| (idx, e)))
+            .filter_map(|(idx, e)| 
+                e.as_mut().map(|e| EntArrRefMut { idx, entity: e })
+            )
     }
 
     pub fn len(&self) -> usize { self.len }
+}
+
+#[derive(Clone, Copy)]
+pub struct EntArrRef<'a, T: InstanceGen<ImgObjInstance>> {
+    pub idx: usize, 
+    pub entity: &'a T, 
+}
+
+pub struct EntArrRefMut<'a, T: InstanceGen<ImgObjInstance>> {
+    pub idx: usize, 
+    pub entity: &'a mut T, 
 }
