@@ -9,6 +9,7 @@ pub mod img_obj;
 pub use instance::{
     Instance, 
     InstanceGen, 
+    buffer::InstanceArray, 
 };
 pub use types::Camera;
 pub use shared::{
