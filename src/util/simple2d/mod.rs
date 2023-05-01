@@ -19,6 +19,7 @@ pub use shared::{
 };
 
 pub mod entity_holder;
+pub mod physic;
 
 /// シンプルな2Dレンダラー
 pub trait Simple2DRender: Send + Sync + Sized + 'static {
