@@ -15,16 +15,17 @@ pub mod sfx;
 pub mod frame;
 
 /// 全体のコンテキスト
-pub struct Context<F: frame::Frame> {
+pub struct Context<I, F: frame::Frame<I>> {
+    _dummy: std::marker::PhantomData<I>, 
     ev_loop: winit::event_loop::EventLoop<()>, 
     window: Arc<Window>, 
     gfx: gfx::GfxCtx, 
     sfx: sfx::SfxCtx, 
     frame: F, 
 }
-impl<F: frame::Frame> Context<F> {
+impl<I, F: frame::Frame<I>> Context<I, F> {
     pub async fn new(
-        frame_initializer: F::Initializer, 
+        frame_initializer: I, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
@@ -52,6 +53,7 @@ impl<F: frame::Frame> Context<F> {
         )?;
 
         Ok(Self {
+            _dummy: std::marker::PhantomData, 
             ev_loop, 
             window, 
             gfx, 

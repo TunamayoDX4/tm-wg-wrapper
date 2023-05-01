@@ -9,11 +9,10 @@ use winit::{
 };
 
 /// コンテキスト処理を抽象化し、また使いまわしが出来るようにするフレーム
-pub trait Frame: Sized + Send + Sync + 'static {
-    type Initializer;
+pub trait Frame<I>: Sized + Send + Sync + 'static {
     fn window_builder() -> winit::window::WindowBuilder;
     fn new(
-        initializer: Self::Initializer, 
+        initializer: I, 
         window: &winit::window::Window, 
         gfx: &super::gfx::GfxCtx, 
         sfx: &super::sfx::SfxCtx, 
