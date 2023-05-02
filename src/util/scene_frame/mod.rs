@@ -87,6 +87,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &mut self, 
         depth: usize, 
         is_top: bool, 
+        render: &Self::Rdr, 
         frame_param: &mut Self::Fpr, 
         window: &Window, 
         gfx: &GfxCtx, 
@@ -109,6 +110,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         depth: usize, 
         is_top: bool, 
         render: &mut Self::Rdr, 
+        frame_param: &Self::Fpr, 
     );
 
     /// ポップ時の処理
@@ -228,7 +230,10 @@ impl<S, Si, Sio> Frame<Si> for SceneFrame<S> where
         &mut self, 
         render_chain: RenderingChain<'r>, 
     ) -> RenderingChain<'r> {
-        self.scenes.rendering(&mut self.renderer);
+        self.scenes.rendering(
+            &mut self.renderer, 
+            &self.fparam, 
+        );
         render_chain.rendering(&mut self.renderer)
     }
 
@@ -240,6 +245,7 @@ impl<S, Si, Sio> Frame<Si> for SceneFrame<S> where
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
         match self.scenes.process(
+            &self.renderer, 
             &mut self.fparam, 
             window, 
             gfx, 
