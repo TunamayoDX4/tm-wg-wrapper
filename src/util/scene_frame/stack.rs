@@ -31,7 +31,7 @@ impl<S: Scene> SceneStack<S> {
     /// 処理
     pub fn process(
         &mut self, 
-        render: &S::Rdr,
+        renderer: &S::Rdr,
         frame_param: &mut S::Fpr, 
         window: &winit::window::Window, 
         gfx: &GfxCtx, 
@@ -47,7 +47,7 @@ impl<S: Scene> SceneStack<S> {
                 s.process(
                     top - depth, 
                     depth == top, 
-                    render, 
+                    renderer, 
                     frame_param, 
                     window, 
                     gfx, 
@@ -129,7 +129,7 @@ impl<S: Scene> SceneStack<S> {
     /// 描画処理
     pub fn rendering(
         &self, 
-        render: &mut S::Rdr, 
+        renderer: &mut S::Rdr, 
         frame_param: &S::Fpr, 
     ) {
         let top = self.scenes.len() - 1;
@@ -142,7 +142,7 @@ impl<S: Scene> SceneStack<S> {
             .for_each(|(idx, scene)| scene.scene.rendering(
                 top - idx, 
                 top == idx, 
-                render, 
+                renderer, 
                 frame_param, 
             ));
     }

@@ -38,7 +38,7 @@ impl<S: Scene> SceneHolder<S> {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        render: &S::Rdr, 
+        renderer: &S::Rdr, 
         frame_param: &mut S::Fpr, 
         window: &Window, 
         gfx: &GfxCtx, 
@@ -49,7 +49,7 @@ impl<S: Scene> SceneHolder<S> {
         self.scene.process(
             depth, 
             is_top, 
-            render, 
+            renderer, 
             frame_param, 
             window, 
             gfx, 

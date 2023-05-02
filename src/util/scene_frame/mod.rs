@@ -23,9 +23,18 @@ use winit::{
 pub mod instance;
 pub mod stack;
 
+/// フレーム付属の値
+pub trait FrameParam: Sized + Send + Sync + 'static {
+    type Rdr: Send + Sync + Renderer;
+    fn update(
+        &mut self, 
+        render: &Self::Rdr, 
+    ) -> Result<(), Box<dyn std::error::Error>>;
+}
+
 pub trait Scene: Sized + Send + Sync + 'static {
     type Rdr: Send + Sync + Renderer;
-    type Fpr: Send + Sync;
+    type Fpr: Send + Sync + FrameParam<Rdr = Self::Rdr>;
     type PopV: Send + Sync;
 
     /// ウィンドウビルダの出力
@@ -87,7 +96,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        render: &Self::Rdr, 
+        renderer: &Self::Rdr, 
         frame_param: &mut Self::Fpr, 
         window: &Window, 
         gfx: &GfxCtx, 
@@ -109,7 +118,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &self, 
         depth: usize, 
         is_top: bool, 
-        render: &mut Self::Rdr, 
+        renderer: &mut Self::Rdr, 
         frame_param: &Self::Fpr, 
     );
 
@@ -244,6 +253,7 @@ impl<S, Si, Sio> Frame<Si> for SceneFrame<S> where
         gfx: &GfxCtx, 
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
+        self.fparam.update(&self.renderer)?;
         match self.scenes.process(
             &self.renderer, 
             &mut self.fparam, 
