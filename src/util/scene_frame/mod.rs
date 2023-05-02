@@ -28,7 +28,7 @@ pub trait FrameParam: Sized + Send + Sync + 'static {
     type Rdr: Send + Sync + Renderer;
     fn update(
         &mut self, 
-        render: &Self::Rdr, 
+        renderer: &Self::Rdr, 
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
