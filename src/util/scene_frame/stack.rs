@@ -1,7 +1,6 @@
 use super::*;
 use instance::*;
 use std::collections::VecDeque;
-use hashbrown::HashMap;
 
 /// シーン機能のスタック
 pub struct SceneStack<S: Scene> {
@@ -40,9 +39,6 @@ impl<S: Scene> SceneStack<S> {
         let top = self.scenes.len() - 1;
         self.scenes.iter_mut()
             .enumerate()
-            .filter(|(depth, s)| 
-                s.require_process(top - *depth, *depth == top)
-            )
             .map(|(depth, s)| 
                 s.process(
                     top - depth, 
@@ -82,7 +78,7 @@ impl<S: Scene> SceneStack<S> {
                 SceneFrameCtrlParam::Continue, 
                 |
                     init, 
-                    (ident, op), 
+                    (_ident, op), 
                 | if let SceneFrameCtrlParam::Continue = init { match op {
                     SceneStackCtrlOp::Push(scene) => {
                         self.scenes.push_back(SceneHolder {

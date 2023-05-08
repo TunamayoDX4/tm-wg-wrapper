@@ -84,13 +84,6 @@ pub trait Scene: Sized + Send + Sync + 'static {
         size: winit::dpi::PhysicalSize<u32>, 
     );
 
-    /// 処理を要するか
-    fn require_process(
-        &self, 
-        depth: usize, 
-        is_top: bool, 
-    ) -> bool;
-
     /// 実際の処理
     fn process(
         &mut self, 

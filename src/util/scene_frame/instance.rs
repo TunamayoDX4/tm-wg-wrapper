@@ -1,5 +1,4 @@
 use super::*;
-use hashbrown::HashMap;
 
 #[derive(Default)]
 pub struct SceneIdentMaster(u64);
@@ -27,13 +26,6 @@ pub struct SceneHolder<S: Scene> {
     pub(super) scene: S, 
 }
 impl<S: Scene> SceneHolder<S> {
-    pub fn require_process(
-        &self, 
-        depth: usize, 
-        is_top: bool, 
-    ) -> bool {
-        self.scene.require_process(depth, is_top)
-    }
     pub fn process(
         &mut self, 
         depth: usize, 
