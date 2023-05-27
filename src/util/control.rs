@@ -1,3 +1,31 @@
+/// 入力制御用パーツモジュール
+pub trait CtrlPart {
+    /// なんかしらトリガされてる
+    fn is_any_triggering(&self) -> bool;
+
+    /// 更新機能を持つ
+    fn update(&mut self);
+}
+
+/// 入力時間カウント機能を持つラッパ
+pub struct TrigTimeWrap<C: CtrlPart> {
+    pub ctrl: C, 
+    pub input_dur: f32, 
+}
+impl<C: CtrlPart> TrigTimeWrap<C> {
+    pub fn update(&mut self, cycle: &super::cycle_measure::CycleMeasure) {
+        self.ctrl.update();
+        if self.ctrl.is_any_triggering() {
+            self.input_dur += cycle.dur
+        } else {
+            self.input_dur = 0.
+        }
+    }
+
+    pub fn ctrl(&self) -> &C { &self.ctrl }
+    pub fn input_dur(&self) -> f32 { self.input_dur }
+}
+
 /// 反転可能なコントロール
 /// 
 /// 順行・逆行を排他的に入力することが出来ます。
@@ -13,6 +41,15 @@ impl Default for RevCtrl {
             count: 0, 
             mode: RevMode::Brake, 
         }
+    }
+}
+impl CtrlPart for RevCtrl {
+    fn is_any_triggering(&self) -> bool {
+        self.triggering
+    }
+
+    fn update(&mut self) {
+        self.update()
     }
 }
 impl RevCtrl {
@@ -90,11 +127,22 @@ impl Default for Trigger {
         }
     }
 }
+impl CtrlPart for Trigger {
+    fn is_any_triggering(&self) -> bool {
+        self.triggering
+    }
+
+    fn update(&mut self) {
+        self.update()
+    }
+}
 impl Trigger {
     pub fn trigger(&mut self, state: winit::event::ElementState) { match state {
         winit::event::ElementState::Pressed => self.triggering = true, 
         winit::event::ElementState::Released => self.triggering = false, 
     }}
+
+    /// カウンタの更新
     pub fn update(&mut self) {if self.triggering { 
         self.count = self.count.checked_add(1)
             .map_or_else(|| u32::MAX, |c| c);
@@ -128,6 +176,15 @@ impl Default for Latch {
             on_count: 0, 
             off_count: 0,  
         }
+    }
+}
+impl CtrlPart for Latch {
+    fn is_any_triggering(&self) -> bool {
+        self.latch_on
+    }
+
+    fn update(&mut self) {
+        self.update()
     }
 }
 impl Latch {
