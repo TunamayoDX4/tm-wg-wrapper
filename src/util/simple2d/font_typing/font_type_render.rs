@@ -9,8 +9,10 @@ use super::{
 
 impl FontTypeRender {
     pub fn new(
+        renderer: ImgObjRender,
         font_set: FontSet, 
     ) -> Self { Self {
+        renderer, 
         font_set
     }}
 
@@ -54,9 +56,8 @@ impl FontTypeRender {
 
     /// 文字列のモデル描画関数
     fn rendering_type_model(
-        &self, 
+        &mut self, 
         type_param: &TypeParam, 
-        renderer: &mut ImgObjRender, 
         (l, w): (f32, [f32; 2]), 
         size: [f32; 2], 
         shift: f32, 
@@ -119,7 +120,7 @@ impl FontTypeRender {
             ];
 
             // インスタンスの生成
-            renderer.push_instance(&ImgObjInstance {
+            self.renderer.push_instance(&ImgObjInstance {
                 position,
                 size,
                 rotation: type_param.rotation,
@@ -179,9 +180,8 @@ impl FontTypeRender {
     /// 描画関数の内部実装
     /// 再帰を使って改行を効率的にレンダリングしてみます
     fn rendering_inner(
-        &self, 
+        &mut self, 
         type_param: &TypeParam, 
-        renderer: &mut ImgObjRender, 
         size: [f32; 2], 
     ) -> ([f32; 2], f32) {
         // 改行での文字列の分割を試みる。
@@ -223,7 +223,6 @@ impl FontTypeRender {
                 // テキストの描画
                 self.rendering_type_model(
                     type_param, 
-                    renderer, 
                     oa_size, 
                     size, 
                     0., 
@@ -247,14 +246,12 @@ impl FontTypeRender {
                 // 改行後の文章の描画
                 let (size, shift_up) = self.rendering_inner(
                     &s1, 
-                    renderer, 
                     size, 
                 );
                 
                 // 改行前のテキストの描画
                 self.rendering_type_model(
                     &s0, 
-                    renderer, 
                     oa_size, 
                     size, 
                     shift_up, 
@@ -267,13 +264,11 @@ impl FontTypeRender {
 
     /// 描画
     pub fn rendering(
-        &self, 
+        &mut self, 
         type_param: &TypeParam, 
-        renderer: &mut ImgObjRender, 
     ) -> (f32, f32) {
         let size = self.rendering_inner(
             type_param, 
-            renderer, 
             [0., 0.]
         ).0;
         (size[0], size[1])

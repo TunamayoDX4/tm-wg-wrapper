@@ -10,9 +10,11 @@ pub struct FontSet {
 }
 
 pub mod font_type_render;
+pub mod font_type_render_rendering;
 
 /// フォント・文字列の描画構造体
 pub struct FontTypeRender {
+    renderer: super::img_obj::ImgObjRender, 
     font_set: FontSet, 
 }
 
