@@ -88,9 +88,9 @@ impl FontTypeRender {
                     super::TypeAlignV::Bottom => -l,
                 }, 
                 match type_param.align_h {
-                    super::TypeAlignH::Left => size[1] - (w[1] + shift),
-                    super::TypeAlignH::Center => size[1] / 2. - (w[1] + shift),
-                    super::TypeAlignH::Right => -(w[1] + shift),
+                    super::TypeAlignH::Left => w[1] + shift,
+                    super::TypeAlignH::Center => -size[1] / 2. + (w[1] + shift),
+                    super::TypeAlignH::Right => -size[1] + (w[1] + shift),
                 }, 
                 -1., 
                 [1, 0]
