@@ -179,7 +179,7 @@ impl FontTypeRender {
 
     /// 描画関数の内部実装
     /// 再帰を使って改行を効率的にレンダリングしてみます
-    fn rendering_inner(
+    fn draw_type_inner(
         &mut self, 
         type_param: &TypeParam, 
         size: [f32; 2], 
@@ -244,7 +244,7 @@ impl FontTypeRender {
                 ];
 
                 // 改行後の文章の描画
-                let (size, shift_up) = self.rendering_inner(
+                let (size, shift_up) = self.draw_type_inner(
                     &s1, 
                     size, 
                 );
@@ -263,11 +263,11 @@ impl FontTypeRender {
     }
 
     /// 描画
-    pub fn rendering(
+    pub fn draw_type(
         &mut self, 
         type_param: &TypeParam, 
     ) -> (f32, f32) {
-        let size = self.rendering_inner(
+        let size = self.draw_type_inner(
             type_param, 
             [0., 0.]
         ).0;
