@@ -1,5 +1,7 @@
 use hashbrown::HashMap;
 
+pub mod text_render;
+
 /// フォントのセット
 pub struct FontSet {
     /// 文字からアクセスできるフォント
@@ -14,7 +16,7 @@ pub mod font_type_render_rendering;
 
 /// フォント・文字列の描画構造体
 pub struct FontTypeRender {
-    renderer: super::img_obj::ImgObjRender, 
+    renderer: text_render::TextRender, 
     font_set: FontSet, 
 }
 
@@ -34,6 +36,9 @@ pub struct CharModel {
 pub struct TypeParam<'a> {
     /// 表示する文字列
     pub s: &'a str, 
+
+    /// 文字の色
+    pub color: [f32; 4], 
 
     /// 文字列の座標
     pub position: [f32; 2], 

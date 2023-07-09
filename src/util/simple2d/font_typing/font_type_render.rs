@@ -1,4 +1,4 @@
-use crate::prelude::simple2d::img_obj::{ImgObjRender, ImgObjInstance};
+use super::text_render::{TextRender, TextInstance};
 
 use super::{
     FontSet, 
@@ -9,7 +9,7 @@ use super::{
 
 impl FontTypeRender {
     pub fn new(
-        renderer: ImgObjRender,
+        renderer: TextRender,
         font_set: FontSet, 
     ) -> Self { Self {
         renderer, 
@@ -120,8 +120,9 @@ impl FontTypeRender {
             ];
 
             // インスタンスの生成
-            self.renderer.push_instance(&ImgObjInstance {
+            self.renderer.push_instance(&TextInstance {
                 position,
+                char_color: type_param.color, 
                 size,
                 rotation: type_param.rotation,
                 tex_coord: font.tex_coord,
@@ -189,6 +190,7 @@ impl FontTypeRender {
             .map(|(s0, s1)| (
                 TypeParam {
                     s: s0,
+                    color: type_param.color, 
                     position: type_param.position,
                     rotation: type_param.rotation,
                     size_ratio: type_param.size_ratio,
@@ -198,6 +200,7 @@ impl FontTypeRender {
                 }, 
                 TypeParam {
                     s: s1,
+                    color: type_param.color, 
                     position: type_param.position,
                     rotation: type_param.rotation,
                     size_ratio: type_param.size_ratio,

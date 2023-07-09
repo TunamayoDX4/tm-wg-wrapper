@@ -1,15 +1,17 @@
-use super::super::{
-    SquareShared, 
-    ImagedShared, 
-    img_obj::ImgObjRenderShared, 
-    Simple2DRender
+use super::{
+    text_render::TextRenderShared, 
+    super::{
+        SquareShared, 
+        ImagedShared, 
+        Simple2DRender
+    }
 };
 
 impl Simple2DRender for super::FontTypeRender {
     type Shared<'a> = (
         &'a SquareShared, 
         &'a ImagedShared, 
-        &'a ImgObjRenderShared, 
+        &'a TextRenderShared, 
     );
 
     fn rendering<'a>(
