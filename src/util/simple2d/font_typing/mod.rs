@@ -1,5 +1,9 @@
 use hashbrown::HashMap;
 
+pub use text_render::{
+    TextRender, 
+    TextRenderShared, 
+};
 pub mod text_render;
 
 /// フォントのセット
