@@ -24,6 +24,15 @@ pub struct FontTypeRender {
     font_set: FontSet, 
 }
 
+/* --- 色指定が可能なフォント・文字列の描画構造 --- */
+pub mod ftr_plus;
+use parking_lot::Mutex;
+pub struct FontTypeRenderPlus {
+    renderer: text_render::TextRender, 
+    font_set: FontSet, 
+    ephemeral: Mutex<ftr_plus::EphemeralFTRPParam>, 
+}
+
 /// 文字のモデル
 pub struct CharModel {
     /// テクスチャ上の座標
@@ -61,6 +70,40 @@ pub struct TypeParam<'a> {
 
     /// 文字列の方向
     pub direction: TypeDirection, 
+}
+
+/// 文字列表示のためのパラメータ
+pub struct TypeParamPlus<'a> {
+    /// 文字列
+    pub s: &'a str, 
+
+    /// デフォルトの文字色
+    pub default_color: [f32; 2], 
+
+    /// ベースの座標
+    pub position: nalgebra::Point2<f32>, 
+
+    /// 回転
+    pub rotation: f32, 
+
+    /// 大きさの比率
+    pub size_ratio: nalgebra::Vector2<f32>, 
+
+    /// 整列
+    pub align: TypeAlign, 
+}
+
+/// 文字列表示時の整列に関するパラメータ
+pub struct TypeAlign {
+
+    /// 垂直方向
+    pub vert: TypeAlignV, 
+    
+    /// 水平方向
+    pub hori: TypeAlignH, 
+
+    /// 文字列の進行方向
+    pub tdir: TypeDirection, 
 }
 
 /// 垂直方向のアラインメント

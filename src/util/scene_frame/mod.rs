@@ -33,6 +33,7 @@ pub trait FrameParam: Sized + Send + Sync + 'static {
 }
 
 pub trait Scene: Sized + Send + Sync + 'static {
+    type InitV;
     type Rdr: Send + Sync + Renderer;
     type Fpr: Send + Sync + FrameParam<Rdr = Self::Rdr>;
     type PopV: Send + Sync;
@@ -42,15 +43,18 @@ pub trait Scene: Sized + Send + Sync + 'static {
 
     /// 初期処理
     fn init_proc(
+        init_v: Self::InitV, 
         window: &Window, 
         gfx: &GfxCtx, 
         sfx: &SfxCtx, 
-    ) -> Result<Self::Fpr, Box<dyn std::error::Error>>;
-
-    /// レンダラの初期化
-    fn render_init(
-        gfx: &GfxCtx, 
-    ) -> Result<Self::Rdr, Box<dyn std::error::Error>>;
+    ) -> Result<
+        (
+            Vec<Self>, 
+            Self::Fpr, 
+            Self::Rdr, 
+        ), 
+        Box<dyn std::error::Error>
+    >;
 
     /// キー入力
     fn input_key(
@@ -159,13 +163,8 @@ pub struct SceneFrame<S: Scene> {
     fparam: S::Fpr, 
     renderer: S::Rdr, 
 }
-impl<S, Si, Sio> Frame<Si> for SceneFrame<S> where
+impl<S> Frame<S::InitV> for SceneFrame<S> where
     S: Scene, 
-    Si: FnOnce(
-        &mut S::Fpr, 
-        &mut S::Rdr, 
-    ) -> Sio,  
-    Sio: IntoIterator<Item = S>, 
 {
 
     fn window_builder() -> winit::window::WindowBuilder {
@@ -173,15 +172,23 @@ impl<S, Si, Sio> Frame<Si> for SceneFrame<S> where
     }
 
     fn new(
-        initializer: Si, 
+        initializer: S::InitV, 
         window: &winit::window::Window, 
         gfx: &GfxCtx, 
         sfx: &SfxCtx, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
-        let mut fparam = S::init_proc(window, gfx, sfx)?;
-        let mut renderer = S::render_init(gfx)?;
+        let (
+            scenes, 
+            fparam, 
+            renderer
+        ) = S::init_proc(
+            initializer, 
+            window, 
+            gfx, 
+            sfx
+        )?;
         let scenes = stack::SceneStack::new(
-            initializer(&mut fparam, &mut renderer)
+            scenes
         );
 
         Ok(Self {
