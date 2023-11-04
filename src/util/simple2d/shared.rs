@@ -78,7 +78,7 @@ pub struct S2DCamera {
     pub camera: super::types::Camera, 
     raw: super::raw::CameraRaw, 
     buffer: wgpu::Buffer, 
-    pub(crate) bg: wgpu::BindGroup, 
+    pub bg: wgpu::BindGroup, 
     pub bg_layout: wgpu::BindGroupLayout, 
 }
 impl S2DCamera {

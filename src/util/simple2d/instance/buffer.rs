@@ -70,5 +70,5 @@ impl<I: Instance> InstanceArray<I> {
         self.raw.gen_buffer(gfx)
     }
 
-    pub(crate) fn len(&self) -> usize { self.raw.instances.len() }
+    pub fn len(&self) -> usize { self.raw.instances.len() }
 }
