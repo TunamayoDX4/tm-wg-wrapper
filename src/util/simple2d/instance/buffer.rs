@@ -52,7 +52,7 @@ pub struct InstanceArray<I: Instance> {
     bake: InstanceBuffer<I>, 
 }
 impl<I: Instance> InstanceArray<I> {
-    pub(crate) fn new() -> Self { Self {
+    pub fn new() -> Self { Self {
         raw: RawInstanceBuffer::new(),
         bake: InstanceBuffer::new(),
     }}
@@ -61,7 +61,7 @@ impl<I: Instance> InstanceArray<I> {
         self.bake.push(instance)
     }
 
-    pub(crate) fn finish(
+    pub fn finish(
         &mut self, 
         gfx: &crate::ctx::gfx::GfxCtx, 
         value: &I::T, 
