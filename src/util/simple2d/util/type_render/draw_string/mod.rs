@@ -139,7 +139,6 @@ impl super::TypeRenderer {
                     let pos = [
                         shift_x + (
                             rv.x as f32 / 2. 
-                            + origin_x 
                             + rect.min.x as f32
                         ) * param.size_ratio.x, 
                         bottom_line_y + (
