@@ -84,6 +84,24 @@ impl<K, T> RevRefContainer<K, T> where
             .map(|e| (&e.key, &mut e.elem))
     }
 
+    /// 領域チェックを行わない参照の取得
+    pub fn get_unchecked(
+        &self, 
+        id: usize, 
+    ) -> Option<(&K, &T)> {
+        self.memory[id].as_ref()
+            .map(|e| (&e.key, &e.elem))
+    }
+
+    /// 領域チェックを行わない参照の取得
+    pub fn get_mut_unchecked(
+        &mut self, 
+        id: usize, 
+    ) -> Option<(&K, &mut T)> {
+        self.memory[id].as_mut()
+            .map(|e| (&e.key, &mut e.elem))
+    }
+
     /// IDの参照取得
     pub fn get_id<Q: Eq + Hash + ?Sized> (
         &self, 

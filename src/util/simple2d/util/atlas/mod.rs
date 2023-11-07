@@ -1,6 +1,4 @@
-use std::{hash::Hash, collections::VecDeque};
-
-use hashbrown::HashMap;
+use std::hash::Hash;
 
 pub mod types;
 pub mod memory;
@@ -95,7 +93,7 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
         self.elem
             .get(id as usize)
             .map(|(
-                k, 
+                _k, 
                 ae
             )| ae.memp.as_ref()).flatten()
     }

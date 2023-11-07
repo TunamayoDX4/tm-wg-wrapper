@@ -24,9 +24,7 @@ pub mod prelude {
             GfxCtx, 
             Renderer, 
         }, 
-        sfx::{
-            SfxCtx, 
-        }, 
+        sfx::SfxCtx, 
     };
     pub use crate::util::*;
 }
