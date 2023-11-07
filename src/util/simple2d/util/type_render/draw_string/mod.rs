@@ -135,7 +135,7 @@ impl super::TypeRenderer {
                     ))
                 ) => {
                     let rv = rect.max - rect.min;
-                    let origin_x = hm.left_side_bearing.abs();
+                    //let origin_x = hm.left_side_bearing.abs();
                     let pos = [
                         shift_x + (
                             rv.x as f32 / 2. 

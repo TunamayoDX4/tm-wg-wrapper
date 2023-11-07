@@ -13,7 +13,10 @@ pub struct Atlas<const BL: usize, P, K, T, C> where
     C: AtlasController<BL, P, K, T>, 
 {
     memory: memory::AtlasMem<BL, P>, 
-    elem: elem::AtlasElemMem<K, T, C::ControllerElemData>, 
+    elem: super::rev_ref::RevRefContainer<
+        K, 
+        elem::AtlasElem<T, C::ControllerElemData>, 
+    >, 
     inserter: C, 
 }
 impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
@@ -36,7 +39,8 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
             size, 
             pixel, 
         );
-        let elem = elem::AtlasElemMem::new();
+        //let elem = elem::AtlasElemMem::new();
+        let elem = super::rev_ref::RevRefContainer::new();
         let inserter = inserter_initializer.initialize(
             size, 
             &mut memory, 
@@ -60,17 +64,17 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
         self.elem.iter()
             .map(|(
                 id, 
-            (
-                aep, 
-                ud, 
-                key, 
-                _i, 
-            )
+            key, 
+            &elem::AtlasElem {
+                memp: aep, 
+                ref ud, 
+                insert_data: _, 
+            }, 
         )| (
             id as u32, 
             ud, 
             key, 
-            aep.map(|aep| self.memory.get_obj(aep))
+            aep.map(|aep| self.memory.get_obj(&aep))
         ))
     }
 
@@ -90,7 +94,10 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
     ) -> Option<&elem::AtlasMemParam> {
         self.elem
             .get(id as usize)
-            .map(|ae| ae.0).flatten()
+            .map(|(
+                k, 
+                ae
+            )| ae.memp.as_ref()).flatten()
     }
 
     pub fn get_amp_by_name<Q>(
@@ -102,7 +109,10 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
     {
         self.elem
             .get(self.get_id(key)? as usize)
-            .map(|ae| ae.0).flatten()
+            .map(|(
+                k, 
+                ae, 
+            )| ae.memp.as_ref()).flatten()
     }
 
     pub fn get(
@@ -116,15 +126,17 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
     )> {
         self.elem.get(id)
             .map(|(
-                aem, 
-                ud, 
                 key, 
-                _i, 
+                &elem::AtlasElem {
+                    memp: ref aem, 
+                    ref ud, 
+                    insert_data: _, 
+                }
             )| (
-                aem, 
+                aem.as_ref(), 
                 ud, 
                 key, 
-                aem.map(|ae| self.memory.get_obj(ae))
+                aem.as_ref().map(|ae| self.memory.get_obj(ae))
             ))
     }
 
@@ -154,15 +166,17 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
     )> {
         self.elem.get_mut(id)
             .map(|(
-                aem, 
-                ud, 
                 key, 
-                _i, 
+                &mut elem::AtlasElem {
+                    memp: ref aem,
+                    ref mut ud,
+                    insert_data: _,
+                }, 
             )| (
-                aem, 
+                aem.as_ref(), 
                 ud, 
                 key, 
-                aem.map(|ae| self.memory.get_obj_mut(ae))
+                aem.as_ref().map(|ae| self.memory.get_obj_mut(ae))
             ))
     }
 
@@ -260,7 +274,10 @@ pub trait AtlasController<const BL: usize, P, K, T> where
     fn insert<Q: Eq + Hash + ?Sized + ToOwned<Owned = K>>(
         &mut self, 
         atlas: &mut memory::AtlasMem<BL, P>, 
-        elem: &mut elem::AtlasElemMem<K, T, Self::ControllerElemData>, 
+        elem: &mut super::rev_ref::RevRefContainer<
+            K, 
+            elem::AtlasElem<T, Self::ControllerElemData>
+        >, 
         key: &Q, 
         size: Option<types::SqSize>, 
         ud: T, 
@@ -271,7 +288,10 @@ pub trait AtlasController<const BL: usize, P, K, T> where
     fn remove(
         &mut self, 
         atlas: &mut memory::AtlasMem<BL, P>, 
-        elem: &mut elem::AtlasElemMem<K, T, Self::ControllerElemData>, 
+        elem: &mut super::rev_ref::RevRefContainer<
+            K, 
+            elem::AtlasElem<T, Self::ControllerElemData>
+        >, 
         id: usize, 
     ) -> Result<(T, K, Option<elem::AtlasMemParam>), Self::RemoveError>;
 }

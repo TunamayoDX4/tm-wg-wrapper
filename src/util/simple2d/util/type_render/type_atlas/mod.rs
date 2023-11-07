@@ -3,10 +3,11 @@ use std::{collections::BTreeMap, num::NonZeroU32};
 use super::super::atlas::{
     types::{SqSize, SqPos}, 
     memory::AtlasMem, 
-    elem::{AtlasElemMem, AtlasMemParam}, 
+    elem::{AtlasElem, AtlasMemParam}, 
     AtlasController, 
     AtlasControllerInitializer, 
 };
+use super::super::rev_ref::RevRefContainer;
 
 pub mod error;
 use error::{
@@ -73,13 +74,19 @@ impl AtlasController<4, u8, char, (
     fn insert<Q: Eq + std::hash::Hash + ?Sized + ToOwned<Owned = char>>(
         &mut self, 
         atlas: &mut AtlasMem<4, u8>, 
-        elem: &mut AtlasElemMem<char, (
-            rusttype::HMetrics, 
-            Option<(
-                rusttype::Rect<i32>, 
-                rusttype::Rect<f32>, 
-            )>, 
-        ), Self::ControllerElemData>, 
+        elem: &mut RevRefContainer<
+            char, 
+            AtlasElem<
+                (
+                    rusttype::HMetrics, 
+                    Option<(
+                        rusttype::Rect<i32>, 
+                        rusttype::Rect<f32>, 
+                    )>
+                ), 
+                Self::ControllerElemData, 
+            >
+        >, 
         key: &Q, 
         size: Option<SqSize>, 
         ud: (
@@ -111,10 +118,12 @@ impl AtlasController<4, u8, char, (
             };
 
             let id = elem.insert(
-                Some(memp), 
-                ud, 
                 key, 
-                (), 
+                AtlasElem { 
+                    memp: Some(memp), 
+                    ud, 
+                    insert_data: () 
+                }
             ).map_err(|_| TypeAtlasInsertError::InsDuplicateKey)?;
 
             // フラグの更新
@@ -166,10 +175,12 @@ impl AtlasController<4, u8, char, (
         None => {
             Ok((
                 elem.insert(
-                None, 
-                    ud, 
                     key, 
-                    ()
+                    AtlasElem { 
+                        memp: None, 
+                        ud, 
+                        insert_data: () 
+                    }
                 ).map_err(|_| TypeAtlasInsertError::InsDuplicateKey)?, 
                 None
             ))
@@ -178,13 +189,19 @@ impl AtlasController<4, u8, char, (
     fn remove(
         &mut self, 
         atlas: &mut AtlasMem<4, u8>, 
-        elem: &mut AtlasElemMem<char, (
-            rusttype::HMetrics, 
-            Option<(
-                rusttype::Rect<i32>, 
-                rusttype::Rect<f32>, 
-            )>, 
-        ), Self::ControllerElemData>, 
+        elem: &mut RevRefContainer<
+            char, 
+            AtlasElem<
+                (
+                    rusttype::HMetrics, 
+                    Option<(
+                        rusttype::Rect<i32>, 
+                        rusttype::Rect<f32>, 
+                    )>
+                ), 
+                Self::ControllerElemData, 
+            >
+        >, 
         id: usize, 
     ) -> Result<(
             (
@@ -200,10 +217,12 @@ impl AtlasController<4, u8, char, (
         Self::RemoveError
     > { match elem.remove(id) {
         Some((
-            Some(amp), 
-            d, 
             k, 
-            _
+            AtlasElem { 
+                memp: Some(amp), 
+                ud: d, 
+                insert_data: _, 
+            }
         )) => {
             let size = &amp.size;
             let pos = &amp.pos;
@@ -249,10 +268,12 @@ impl AtlasController<4, u8, char, (
             Ok((d, k, Some(amp)))
         }, 
         Some((
-            None, 
-            d, 
             k, 
-            _
+            AtlasElem { 
+                memp: None, 
+                ud: d, 
+                insert_data: _ 
+            }
         )) => Ok((d, k, None)), 
         None => Err(TypeAtlasRemoveError::EntryIsNotExist)
     } }
