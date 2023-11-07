@@ -129,8 +129,11 @@ impl super::TypeRenderer {
                     let rv = rect.max - rect.min;
                     let origin_x = hm.left_side_bearing.abs();
                     let pos = [
-                        shift_x + rv.x as f32 / 2. + origin_x, 
-                        bottom_line_y + rv.y as f32 / 2. - rect.max.y as f32 * param.size_ratio.y, 
+                        shift_x + (rv.x as f32 / 2. + origin_x) * param.size_ratio.x, 
+                        bottom_line_y + (
+                            rv.y as f32 / 2. 
+                            - rect.max.y as f32
+                        ) * param.size_ratio.y, 
                     ];
                     let pos = [
                         pos[0] * rotation.x - pos[1] * rotation.y, 
