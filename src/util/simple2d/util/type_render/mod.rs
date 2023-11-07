@@ -6,7 +6,6 @@ use crate::ctx::gfx::GfxCtx;
 
 pub mod render_core;
 pub mod param;
-pub mod type_atlas;
 pub mod atlas;
 pub mod rendering;
 pub mod draw_string;
@@ -20,6 +19,12 @@ pub mod prelude {
         TypeAlignV, 
     };
 }
+
+use super::atlas::inserter::bl::{
+    BLInserter, 
+    BLInserterInitializer, 
+    error as bl_error, 
+};
 
 pub struct TypeRenderer {
     font: Font<'static>, 
@@ -59,7 +64,7 @@ impl TypeRenderer {
         pos: nalgebra::Point2<f32>, 
         color: [f32; 4], 
     ) -> Result<
-        (), type_atlas::error::TypeAtlasInsertError, 
+        (), bl_error::BLInsertError, 
     > {
         let (
             _hm, 
@@ -114,7 +119,7 @@ impl TypeRenderer {
         param: &param::TypeParam, 
     ) -> Result<
         nalgebra::Vector2<f32>, 
-        type_atlas::error::TypeAtlasInsertError, 
+        bl_error::BLInsertError, 
     > {
         Ok(self.draw_string_inner(
             &self.font.v_metrics(self.scale), 
@@ -135,7 +140,10 @@ impl TypeRenderer {
         str: &str, 
         pos: impl Into<nalgebra::Point2<f32>>, 
         color: [f32; 4], 
-    ) -> Result<nalgebra::Vector2<f32>, type_atlas::error::TypeAtlasInsertError> {
+    ) -> Result<
+        nalgebra::Vector2<f32>, 
+        bl_error::BLInsertError, 
+    > {
         let vm = self.font.v_metrics(self.scale);
         let pos: nalgebra::Point2<f32> = pos.into();
         

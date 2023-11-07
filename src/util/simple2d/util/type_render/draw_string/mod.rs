@@ -2,7 +2,6 @@ use std::str::Split;
 
 use rusttype::VMetrics;
 use super::{
-    type_atlas::error::TypeAtlasInsertError, 
     param::{
         TypeAlignH, 
         TypeAlignV, 
@@ -27,7 +26,7 @@ impl super::TypeRenderer {
         rotation: nalgebra::Vector2<f32>, 
     ) -> Result<
         DrawStringInnerSuccess, 
-        TypeAtlasInsertError, 
+        super::bl_error::BLInsertError, 
     > {
         let str = if let Some(
             auto_returned
@@ -191,7 +190,7 @@ impl super::TypeRenderer {
             Option<(&'a str, usize)>, 
             nalgebra::Vector2<f32>, 
         ), 
-        TypeAtlasInsertError, 
+        super::bl_error::BLInsertError, 
     > {
         let line_height = vm.ascent - vm.descent;
         let mut shift_x = 0.;

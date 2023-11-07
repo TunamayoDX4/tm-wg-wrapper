@@ -9,14 +9,11 @@ use super::super::super::{
     ImagedShared, 
     types::Texture, 
 };
-use crate::{
-    ctx::gfx::GfxCtx, 
-};
+use crate::ctx::gfx::GfxCtx;
 use super::super::atlas::{
     Atlas, 
     types::SqSize, 
 };
-use super::type_atlas;
 
 pub struct TypeAtlas {
     atlas: super::atlas::Atlas<
@@ -24,7 +21,7 @@ pub struct TypeAtlas {
         u8, 
         char, 
         (HMetrics, Option<(Rect<i32>, Rect<f32>)>,), 
-        type_atlas::TypeAtlasControl, 
+        super::BLInserter, 
     >, 
     buf: Vec<[u8; 4]>, 
     updated: bool, 
@@ -35,7 +32,7 @@ impl TypeAtlas {
     ) -> Self { Self {
         atlas: super::atlas::Atlas::new(
             size, 
-            type_atlas::TypeAtlasCtrlInitializer, 
+            super::BLInserterInitializer, 
             255u8, 
         ).unwrap(), 
         buf: Vec::new(), 
@@ -122,7 +119,7 @@ impl TypeAtlas {
         font: &Font<'static>, 
     ) -> Result<
         (&HMetrics, Option<([[f32; 2]; 2], &Rect<i32>, &Rect<f32>)>), 
-        type_atlas::error::TypeAtlasInsertError
+        super::bl_error::BLInsertError
     > {
         let glyph = font.glyph(char)
             .scaled(scale);

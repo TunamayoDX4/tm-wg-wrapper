@@ -1,39 +1,77 @@
-use std::{collections::BTreeMap, num::NonZeroU32};
+//! Bottom-Left法に基づいたインサータ
 
-use super::super::atlas::{
-    types::{SqSize, SqPos}, 
-    memory::AtlasMem, 
-    elem::{AtlasElem, AtlasMemParam}, 
-    AtlasController, 
-    AtlasControllerInitializer, 
-};
-use super::super::rev_ref::RevRefContainer;
-
-pub mod error;
-use error::{
-    TypeAtlasInsertError, 
-    TypeAtlasRemoveError, 
+use std::{
+    collections::BTreeMap, 
+    num::NonZeroU32, hash::Hash
 };
 
-pub struct TypeAtlasCtrlInitializer;
-impl AtlasControllerInitializer<4, u8, char, (
-    rusttype::HMetrics, 
-    Option<(
-        rusttype::Rect<i32>, 
-        rusttype::Rect<f32>, 
-    )>, 
-)> for TypeAtlasCtrlInitializer {
-    type Initialized = TypeAtlasControl;
+pub mod error {
+    /// 挿入処理に失敗
+    #[derive(Debug, Clone)]
+    pub enum BLInsertError {
+        KeyDuplicate, 
+        InsNotEnoughSpace, 
+        InsDataIsTooLarge, 
+    }
+
+    /// 除去処理に失敗
+    #[derive(Debug, Clone)]
+    pub enum BLRemoveError {
+        EntryNotExist, 
+    }
+
+    impl std::fmt::Display for BLInsertError {
+        fn fmt(
+            &self, 
+            f: &mut std::fmt::Formatter<'_>
+        ) -> std::fmt::Result { f.write_fmt(match self {
+            BLInsertError::KeyDuplicate => format_args!(
+                "Insert key duplicate"
+            ), 
+            BLInsertError::InsNotEnoughSpace => format_args!(
+                "Insert space is not enough"
+            ),
+            BLInsertError::InsDataIsTooLarge => format_args!(
+                "Insert data is too large"
+            ),
+        })}
+    }
+    impl std::error::Error for BLInsertError {}
+
+    impl std::fmt::Display for BLRemoveError {
+        fn fmt(
+            &self, 
+            f: &mut std::fmt::Formatter<'_>
+        ) -> std::fmt::Result { f.write_fmt(match self {
+            BLRemoveError::EntryNotExist => format_args!(
+                "Entry is not exist"
+            ), 
+        })}
+    }
+    impl std::error::Error for BLRemoveError {}
+}
+
+/// # BL法に基づいた挿入処理モジュールのイニシャライザ
+pub struct BLInserterInitializer;
+impl<
+    const BL: usize, 
+    P: Copy, 
+    K: Eq + Hash, 
+    T, 
+> super::AtlasControllerInitializer<
+    BL, 
+    P, 
+    K, 
+    T, 
+> for BLInserterInitializer {
+    type Initialized = BLInserter;
     type InitError = ();
 
     fn initialize(
         self, 
-        size: SqSize, 
-        _memory: &mut AtlasMem<4, u8>, 
-    ) -> Result<
-        Self::Initialized, 
-        Self::InitError
-    > { Ok(TypeAtlasControl {
+        size: super::SqSize, 
+        _memory: &mut super::AtlasMem<BL, P>, 
+    ) -> Result<Self::Initialized, Self::InitError> { Ok(BLInserter {
         unuse_flag: {
             let mut vec = Vec::with_capacity(size.serial());
             vec.resize(size.serial(), 0);
@@ -47,84 +85,64 @@ impl AtlasControllerInitializer<4, u8, char, (
     })}
 }
 
-//#[derive(Debug)]
-pub struct TypeAtlasControl {
+/// # BL法に基づいた挿入処理モジュール
+pub struct BLInserter {
+
+    /// データが未使用であることを確認するためのフラグ
     unuse_flag: Vec<u8>, 
+
+    /// オブジェクトの配置可能箇所のチートシート
     base_line: BTreeMap<u32, Option<Vec<(u32, NonZeroU32)>>>, 
 }
-impl std::fmt::Debug for TypeAtlasControl {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("TypeAtlasControl")
-            .field("unuse_flag\n", &self.unuse_flag)
-            .field("base_line", &self.base_line)
-            .finish()
-    }
-}
-impl AtlasController<4, u8, char, (
-    rusttype::HMetrics, 
-    Option<(
-        rusttype::Rect<i32>, 
-        rusttype::Rect<f32>, 
-    )>, 
-)> for TypeAtlasControl {
-    type InsertError = TypeAtlasInsertError;
-    type RemoveError = TypeAtlasRemoveError;
+impl<
+    const BL: usize, 
+    P: Copy, 
+    K: Eq + Hash, 
+    T, 
+> super::AtlasController<BL, P, K, T> for BLInserter {
+    type InsertError = error::BLInsertError;
+    type RemoveError = error::BLRemoveError;
     type ControllerElemData = ();
 
-    fn insert<Q: Eq + std::hash::Hash + ?Sized + ToOwned<Owned = char>>(
+    fn insert<Q: Eq + Hash + ?Sized + ToOwned<Owned = K>>(
         &mut self, 
-        atlas: &mut AtlasMem<4, u8>, 
-        elem: &mut RevRefContainer<
-            char, 
-            AtlasElem<
-                (
-                    rusttype::HMetrics, 
-                    Option<(
-                        rusttype::Rect<i32>, 
-                        rusttype::Rect<f32>, 
-                    )>
-                ), 
-                Self::ControllerElemData, 
-            >
+        atlas: &mut super::AtlasMem<BL, P>, 
+        elem: &mut super::RevRefContainer<
+            K, 
+            super::AtlasElem<T, Self::ControllerElemData>
         >, 
         key: &Q, 
-        size: Option<SqSize>, 
-        ud: (
-            rusttype::HMetrics, 
-            Option<(
-                rusttype::Rect<i32>, 
-                rusttype::Rect<f32>, 
-            )>, 
-        ), 
+        size: Option<super::SqSize>, 
+        ud: T, 
     ) -> Result<
-        (usize, Option<AtlasMemParam>), 
+        (usize, Option<super::AtlasMemParam>), 
         Self::InsertError
     > where
-        char: std::borrow::Borrow<Q>
-    { match size {
+        K: std::borrow::Borrow<Q>
+    {match size {
         Some(size) => { if atlas.size.w() < size.w() 
             && atlas.size.h() < size.h() 
         {
-            return Err(TypeAtlasInsertError::IsDataTooLarge)
+            return Err(error::BLInsertError::InsDataIsTooLarge)
         } else {
             let pos = self.seek_baseline(
                 atlas, 
                 size
             )?;
 
-            let memp = AtlasMemParam {
+            let memp = super::AtlasMemParam {
                 pos, 
                 size, 
             };
 
             let id = elem.insert(
                 key, 
-                AtlasElem { 
+                super::AtlasElem { 
                     memp: Some(memp), 
                     ud, 
                     insert_data: () 
                 }
-            ).map_err(|_| TypeAtlasInsertError::InsDuplicateKey)?;
+            ).map_err(|_| error::BLInsertError::KeyDuplicate)?;
 
             // フラグの更新
             for y in (0..size.h().get())
@@ -176,49 +194,31 @@ impl AtlasController<4, u8, char, (
             Ok((
                 elem.insert(
                     key, 
-                    AtlasElem { 
+                    super::AtlasElem { 
                         memp: None, 
                         ud, 
                         insert_data: () 
                     }
-                ).map_err(|_| TypeAtlasInsertError::InsDuplicateKey)?, 
+                ).map_err(|_| error::BLInsertError::KeyDuplicate)?, 
                 None
             ))
     }}}
 
     fn remove(
         &mut self, 
-        atlas: &mut AtlasMem<4, u8>, 
-        elem: &mut RevRefContainer<
-            char, 
-            AtlasElem<
-                (
-                    rusttype::HMetrics, 
-                    Option<(
-                        rusttype::Rect<i32>, 
-                        rusttype::Rect<f32>, 
-                    )>
-                ), 
-                Self::ControllerElemData, 
-            >
+        atlas: &mut super::AtlasMem<BL, P>, 
+        elem: &mut super::RevRefContainer<
+            K, 
+            super::AtlasElem<T, Self::ControllerElemData>
         >, 
         id: usize, 
-    ) -> Result<(
-            (
-                rusttype::HMetrics, 
-                Option<(
-                    rusttype::Rect<i32>, 
-                    rusttype::Rect<f32>, 
-                )>, 
-            ), 
-            char, 
-            Option<AtlasMemParam>, 
-        ), 
+    ) -> Result<
+        (T, K, Option<super::AtlasMemParam>), 
         Self::RemoveError
-    > { match elem.remove(id) {
+    > {match elem.remove(id) {
         Some((
             k, 
-            AtlasElem { 
+            super::AtlasElem { 
                 memp: Some(amp), 
                 ud: d, 
                 insert_data: _, 
@@ -269,106 +269,25 @@ impl AtlasController<4, u8, char, (
         }, 
         Some((
             k, 
-            AtlasElem { 
+            super::AtlasElem { 
                 memp: None, 
                 ud: d, 
                 insert_data: _ 
             }
         )) => Ok((d, k, None)), 
-        None => Err(TypeAtlasRemoveError::EntryIsNotExist)
-    } }
+        None => Err(error::BLRemoveError::EntryNotExist)
+    }}
 }
-
-impl TypeAtlasControl {
-    /*
-    pub fn seek_bl(
+impl BLInserter {
+    /// オブジェクトが置ける場所ごとの走査
+    fn seek_baseline<
+        const BL: usize, 
+        P: Copy, 
+    >(
         &self, 
-        atlas: &AtlasMem<4, u8>, 
-        object_size: SqSize, 
-    ) -> Result<SqPos, TypeAtlasInsertError> {
-        let default_ary = &[
-            (0u32, NonZeroU32::new(1).unwrap()), 
-            (1u32, *atlas.size.w()), 
-            (u32::MAX, NonZeroU32::new(u32::MAX).unwrap()), 
-        ];
-        'blseek_y: for(
-            bl_y, 
-            x_bl_arr, 
-        ) in self.base_line.iter()
-            .map(|(
-                bl_y, x_bl_arr, 
-            )| (
-                *bl_y, 
-                x_bl_arr.as_ref()
-                    .map(|v| v.as_slice())
-                    .unwrap_or(default_ary)
-            ))
-        {
-            if atlas.size.h().get() - bl_y < object_size.h().get() {
-                return Err(TypeAtlasInsertError::InsNotEnoughSpace)
-            }
-
-            // x seek head
-            let mut xskh = 0u32;
-
-            // オブジェクトのX方向へのシーク
-            for (bl_x, seek_width) in x_bl_arr.iter()
-            {
-                if atlas.size.w().get() - bl_x < object_size.w().get() { 
-                    continue 'blseek_y 
-                }
-
-                match self.seek_obj(
-                    object_size, 
-                    [
-                        *bl_x, 
-                        bl_y
-                    ].into(), 
-                    xskh.checked_sub(object_size.w().get()).unwrap_or(0), 
-                    seek_width.checked_add(*bl_x)
-                        .unwrap_or(*atlas.size.w()), 
-                ) {
-                    Ok(x) => return Ok([
-                        x, 
-                        bl_y
-                    ].into()), 
-                    Err(e) => xskh = e, 
-                }
-            }
-        }
-
-        Err(TypeAtlasInsertError::InsNotEnoughSpace)
-    }
-
-    pub fn seek_obj(
-        &self, 
-        object_size: SqSize, 
-        base_line: SqPos, 
-        mut seek_head
-        seek_area: (u32, NonZeroU32), 
-        mut seek_head: u32, 
-        seek_tail: NonZeroU32, 
-    ) -> Result<u32, u32> {
-        'base_seek: while seek_head < seek_tail.get() {
-            
-            let mut shift_x = 0;
-
-            seek_head += shift_x;
-        }
-
-        Err(0)
-    }
-     */
-
-
-    pub fn seek_baseline(
-        &self, 
-        atlas: &AtlasMem<4, u8>, 
-        obj_size: SqSize, 
-    ) -> Result<SqPos, TypeAtlasInsertError> {
-
-        // デフォルトの走査配列
-        // アトラスの幅分。
+        atlas: &super::AtlasMem<BL, P>, 
+        obj_size: super::SqSize, 
+    ) -> Result<super::SqPos, error::BLInsertError> {
         let defarray = &[
             (0u32, NonZeroU32::new(1).unwrap()), 
             (1u32, *atlas.size.w()), 
@@ -389,7 +308,7 @@ impl TypeAtlasControl {
             ))
         {
             if atlas.size.h().get() - bl_y < obj_size.h().get() {
-                return Err(TypeAtlasInsertError::InsNotEnoughSpace)
+                return Err(error::BLInsertError::InsNotEnoughSpace)
             }
 
             let mut seeked_tail_x = 0;
@@ -419,16 +338,20 @@ impl TypeAtlasControl {
             }
         }
 
-        Err(TypeAtlasInsertError::InsNotEnoughSpace)
+        Err(error::BLInsertError::InsNotEnoughSpace)
     }
 
-    pub fn seek_object(
+    /// オブジェクトが置ける場所を詳細に走査
+    fn seek_object<
+        const BL: usize, 
+        P: Copy, 
+    >(
         &self, 
-        atlas: &AtlasMem<4, u8>, 
-        obj_size: SqSize, 
-        baseline: SqPos, 
+        atlas: &super::AtlasMem<BL, P>, 
+        obj_size: super::SqSize, 
+        baseline: super::SqPos, 
         baseline_x_tail: NonZeroU32, 
-    ) -> Result<SqPos, u32> {
+    ) -> Result<super::SqPos, u32> {
         let mut seek_x_head = baseline.x().checked_sub(
             obj_size.w().get() - 1
         ).unwrap_or(0);
@@ -474,6 +397,4 @@ impl TypeAtlasControl {
 
         Err(baseline_x_tail.get())
     }
-
-
 }

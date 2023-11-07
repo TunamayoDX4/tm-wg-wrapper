@@ -3,6 +3,7 @@ use std::hash::Hash;
 pub mod types;
 pub mod memory;
 pub mod elem;
+pub mod inserter;
 
 /// # テクスチャ・アトラス作成用ユーティリティ
 pub struct Atlas<const BL: usize, P, K, T, C> where
@@ -269,6 +270,7 @@ pub trait AtlasController<const BL: usize, P, K, T> where
     type RemoveError;
     type ControllerElemData: Sized;
     
+    /// # 挿入処理
     fn insert<Q: Eq + Hash + ?Sized + ToOwned<Owned = K>>(
         &mut self, 
         atlas: &mut memory::AtlasMem<BL, P>, 
@@ -283,6 +285,7 @@ pub trait AtlasController<const BL: usize, P, K, T> where
         K: std::borrow::Borrow<Q>
     ;
 
+    /// # 除去処理
     fn remove(
         &mut self, 
         atlas: &mut memory::AtlasMem<BL, P>, 
