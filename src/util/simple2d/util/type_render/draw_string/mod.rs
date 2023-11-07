@@ -140,7 +140,7 @@ impl super::TypeRenderer {
                         shift_x + (
                             rv.x as f32 / 2. 
                             + origin_x 
-                            - rect.max.x as f32
+                            + rect.max.x as f32
                         ) * param.size_ratio.x, 
                         bottom_line_y + (
                             rv.y as f32 / 2. 
