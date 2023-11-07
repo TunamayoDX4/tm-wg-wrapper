@@ -77,7 +77,7 @@ impl Instance for TextInstance {
     type Raw = TextInstanceRaw;
     type T = Texture;
 
-    fn as_raw(self, value: &Self::T) -> Self::Raw {
+    fn as_raw(self, _value: &Self::T) -> Self::Raw {
         let position = self.position;
         let size = self.size;
         let rotation = [

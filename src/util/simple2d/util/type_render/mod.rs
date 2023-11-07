@@ -11,6 +11,16 @@ pub mod atlas;
 pub mod rendering;
 pub mod draw_string;
 
+pub mod prelude {
+    use super::*;
+    pub use param::{
+        TypeParam, 
+        TypeAlign, 
+        TypeAlignH, 
+        TypeAlignV, 
+    };
+}
+
 pub struct TypeRenderer {
     font: Font<'static>, 
     scale: Scale, 
@@ -52,7 +62,7 @@ impl TypeRenderer {
         (), type_atlas::error::TypeAtlasInsertError, 
     > {
         let (
-            hm, 
+            _hm, 
             uv_rect
         ) = match self.atlas.get_by_name(char) {
             Some((
@@ -74,7 +84,7 @@ impl TypeRenderer {
                 (hm, uv_rect)
             },
         };
-        let vm = self.font.v_metrics(self.scale);
+        let _vm = self.font.v_metrics(self.scale);
 
         match uv_rect {
             Some((uv, rect, _rect_strict)) => {

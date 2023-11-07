@@ -110,7 +110,7 @@ impl super::TypeRenderer {
         let base_pos = param.position + shift;
         let bottom_line_y = (
             base_pos.y - line_height / 2.
-        ) + vm.descent;
+        ) + vm.descent * param.size_ratio.y;
         let mut shift_x = base_pos.x * param.size_ratio.x;
         let str = match clipped {
             None => str, 
