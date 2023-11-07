@@ -16,6 +16,8 @@ pub mod prelude {
     pub use wgpu_glyph;
     pub use rodio;
     pub use nalgebra;
+    pub use rusttype;
+    pub use image;
 
     pub use crate::ctx::{
         Context, 
