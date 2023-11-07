@@ -108,7 +108,7 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
         self.elem
             .get(self.get_id(key)? as usize)
             .map(|(
-                k, 
+                _k, 
                 ae, 
             )| ae.memp.as_ref()).flatten()
     }

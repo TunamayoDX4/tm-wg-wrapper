@@ -112,8 +112,11 @@ impl TypeRenderer {
         &mut self, 
         str: &str, 
         param: &param::TypeParam, 
-    ) {
-        self.draw_string_inner(
+    ) -> Result<
+        nalgebra::Vector2<f32>, 
+        type_atlas::error::TypeAtlasInsertError, 
+    > {
+        Ok(self.draw_string_inner(
             &self.font.v_metrics(self.scale), 
             str.split('\n'), 
             None, 
@@ -124,7 +127,7 @@ impl TypeRenderer {
                 param.rotation.cos(), 
                 param.rotation.sin(), 
             ].into(), 
-        ).unwrap();
+        )?.overall_size)
     }
 
     pub fn draw_line(
