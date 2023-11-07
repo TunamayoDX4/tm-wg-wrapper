@@ -91,6 +91,8 @@ impl super::TypeRenderer {
             overall.overall_shift, 
             rotation, 
             auto_returned.map(|(_, i)| i), 
+            overall.overall_size, 
+            size.x, 
         );
 
         Ok(overall)
@@ -105,13 +107,19 @@ impl super::TypeRenderer {
         overall_shift: nalgebra::Vector2<f32>, 
         rotation: nalgebra::Vector2<f32>, 
         clipped: Option<usize>, 
+        overall_size: nalgebra::Vector2<f32>, 
+        row_size: f32, 
     ) {
         let line_height = (vm.ascent - vm.descent) * param.size_ratio.y;
         let base_pos = param.position + shift;
         let bottom_line_y = (
             base_pos.y - line_height / 2.
         ) + vm.descent * param.size_ratio.y;
-        let mut shift_x = base_pos.x * param.size_ratio.x;
+        let mut shift_x = (base_pos.x + match param.align.horizon {
+            TypeAlignH::Left => 0.,
+            TypeAlignH::Center => (overall_size.x - row_size) / 2.,
+            TypeAlignH::Right => overall_size.x - row_size,
+        }) * param.size_ratio.x;
         let str = match clipped {
             None => str, 
             Some(clip) => &str[..clip], 
