@@ -10,6 +10,7 @@ pub mod prelude {
             Atlas, 
             AtlasController, 
             AtlasControllerInitializer, 
+            types::{SqPos, SqSize}, 
             inserter::prelude::*, 
         }, 
         rev_ref::RevRefContainer, 
