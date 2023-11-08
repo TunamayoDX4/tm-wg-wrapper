@@ -14,9 +14,7 @@ use super::{
         Instance, 
         InstanceGen, 
         InstanceRaw, 
-        buffer::{
-            InstanceArray, 
-        }, 
+        buffer::InstanceArray, 
     }, 
     shared::{
         S2DCamera, 
@@ -196,7 +194,32 @@ pub struct ImgObjRender {
     instance_buffer: Buffer, 
 }
 impl ImgObjRender {
-    pub fn new(
+    pub fn new<C: std::ops::Deref<Target = [u8]>>(
+        gfx: &crate::ctx::gfx::GfxCtx, 
+        imaged_shared: &ImagedShared, 
+        image: image::ImageBuffer<image::Rgba<u8>, C>, 
+    ) -> Self {
+        // テクスチャのロード
+        let texture = Texture::from_image(
+            gfx, 
+            &imaged_shared.diffuse, 
+            image, 
+        );
+
+        // インスタンスの生成
+        let mut instances = InstanceArray::new();
+
+        // インスタンスバッファの初期化
+        let instance_buffer = instances.finish(gfx, &texture);
+
+        Self {
+            texture, 
+            instances, 
+            instance_buffer, 
+        }
+    }
+
+    pub fn from_image(
         gfx: &crate::ctx::gfx::GfxCtx, 
         imaged_shared: &ImagedShared, 
         texture: impl AsRef<std::path::Path>, 

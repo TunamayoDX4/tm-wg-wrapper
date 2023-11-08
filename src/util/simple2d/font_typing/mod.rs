@@ -24,15 +24,6 @@ pub struct FontTypeRender {
     font_set: FontSet, 
 }
 
-/* --- 色指定が可能なフォント・文字列の描画構造 --- */
-pub mod ftr_plus;
-use parking_lot::Mutex;
-pub struct FontTypeRenderPlus {
-    renderer: text_render::TextRender, 
-    font_set: FontSet, 
-    ephemeral: Mutex<ftr_plus::EphemeralFTRPParam>, 
-}
-
 /// 文字のモデル
 pub struct CharModel {
     /// テクスチャ上の座標

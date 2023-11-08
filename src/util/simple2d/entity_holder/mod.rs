@@ -1,10 +1,8 @@
 use std::collections::VecDeque;
 
-use super::{
-    instance::{
-        Instance, 
-        InstanceGen, 
-    }, 
+use super::instance::{
+    Instance, 
+    InstanceGen, 
 };
 
 pub struct EntityHolder<_T: Instance, T: InstanceGen<_T>> {
@@ -44,16 +42,6 @@ impl<_T: Instance, T: InstanceGen<_T>> EntityHolder<_T, T> {
 impl<_T: Instance, T: InstanceGen<_T>> InstanceGen<_T> for EntityHolder<_T, T> {
     fn generate(&self, instances: &mut super::instance::buffer::InstanceArray<_T>) {
         self.entity.as_ref().map(|e| e.generate(instances));
-    }
-}
-
-pub struct MemSaveEntityArray<_T: Instance, T: InstanceGen<_T>> {
-    _dummy: std::marker::PhantomData<_T>, 
-    entity: Vec<Option<T>>, 
-    remove_queue: Vec<Option<std::num::NonZeroUsize>>, 
-}
-impl<_T: Instance, T: InstanceGen<_T>> EntityArray<_T, T> {
-    fn insert_remove_queue(&mut self, idx: std::num::NonZeroUsize) {
     }
 }
 
