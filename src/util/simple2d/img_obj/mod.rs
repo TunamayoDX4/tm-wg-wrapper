@@ -244,6 +244,9 @@ impl ImgObjRender {
         })
     }
 
+    /// テクスチャの更新用の可変参照の取得
+    pub fn get_texture(&mut self) -> &mut Texture { &mut self.texture }
+
     /// インスタンスの更新
     pub fn push_instance<'a, T: InstanceGen<ImgObjInstance> + 'a>(
         &mut self, 
