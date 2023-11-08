@@ -18,6 +18,7 @@ pub mod bl;
 pub mod prelude {
     pub use super::bl::{
         BLInserter, 
+        BLInserterInitializer, 
         error as bl_error, 
     };
 }
