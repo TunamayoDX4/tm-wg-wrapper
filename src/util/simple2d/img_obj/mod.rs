@@ -14,7 +14,7 @@ use super::{
         Instance, 
         InstanceGen, 
         InstanceRaw, 
-        buffer::InstanceArray, 
+        buffer::InstanceArray, InstanceModifier, 
     }, 
     shared::{
         S2DCamera, 
@@ -27,6 +27,8 @@ use super::{
         INDICES, 
     }, 
 };
+
+pub mod atlas;
 
 /// GPUで処理される生のインスタンス
 #[repr(C)]
@@ -67,11 +69,16 @@ pub struct ImgObjInstance {
     pub tex_size: [f32; 2], 
     pub tex_rev: [bool; 2], 
 }
-impl Instance for ImgObjInstance {
+impl<M: InstanceModifier<Self>> Instance<M> for ImgObjInstance {
     type Raw = ImgObjInstanceRaw;
     type T = Texture;
 
-    fn as_raw(self, value: &Self::T) -> Self::Raw {
+    fn as_raw(
+        mut self, 
+        context: &mut M, 
+        value: &Self::T, 
+    ) -> Self::Raw {
+        context.modify(&mut self);
         let position = self.position;
         let size = self.size;
         let rotation = [
@@ -99,10 +106,12 @@ impl Instance for ImgObjInstance {
     }
     
 }
-impl InstanceGen<ImgObjInstance> for ImgObjInstance {
+impl<
+    M: InstanceModifier<Self>
+> InstanceGen<M, ImgObjInstance> for ImgObjInstance {
     fn generate(
         &self, 
-        instances: &mut super::instance::buffer::InstanceArray<ImgObjInstance>, 
+        instances: &mut super::instance::buffer::InstanceArray<M, ImgObjInstance>, 
     ) {
         instances.push(*self)
     }
@@ -188,16 +197,18 @@ impl ImgObjRenderShared {
 }
 
 /// 画像用レンダラ
-pub struct ImgObjRender {
+pub struct ImgObjRender<M: InstanceModifier<ImgObjInstance>> {
     texture: Texture, 
-    instances: InstanceArray<ImgObjInstance>, 
+    instances: InstanceArray<M, ImgObjInstance>, 
     instance_buffer: Buffer, 
+    modifier: M, 
 }
-impl ImgObjRender {
+impl<M: InstanceModifier<ImgObjInstance>> ImgObjRender<M> {
     pub fn new<C: std::ops::Deref<Target = [u8]>>(
         gfx: &crate::ctx::gfx::GfxCtx, 
         imaged_shared: &ImagedShared, 
         image: image::ImageBuffer<image::Rgba<u8>, C>, 
+        mut modifier: M, 
     ) -> Self {
         // テクスチャのロード
         let texture = Texture::from_image(
@@ -210,12 +221,17 @@ impl ImgObjRender {
         let mut instances = InstanceArray::new();
 
         // インスタンスバッファの初期化
-        let instance_buffer = instances.finish(gfx, &texture);
+        let instance_buffer = instances.finish(
+            gfx, 
+            &mut modifier, 
+            &texture, 
+        );
 
         Self {
             texture, 
             instances, 
             instance_buffer, 
+            modifier, 
         }
     }
 
@@ -223,6 +239,7 @@ impl ImgObjRender {
         gfx: &crate::ctx::gfx::GfxCtx, 
         imaged_shared: &ImagedShared, 
         texture: impl AsRef<std::path::Path>, 
+        mut modifier: M, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
         // テクスチャのロード
         let texture = Texture::new(
@@ -235,12 +252,17 @@ impl ImgObjRender {
         let mut instances = InstanceArray::new();
 
         // インスタンスバッファの初期化
-        let instance_buffer = instances.finish(gfx, &texture);
+        let instance_buffer = instances.finish(
+            gfx, 
+            &mut modifier, 
+            &texture, 
+        );
 
         Ok(Self {
             texture, 
             instances, 
             instance_buffer, 
+            modifier, 
         })
     }
 
@@ -248,14 +270,14 @@ impl ImgObjRender {
     pub fn get_texture(&mut self) -> &mut Texture { &mut self.texture }
 
     /// インスタンスの更新
-    pub fn push_instance<'a, T: InstanceGen<ImgObjInstance> + 'a>(
+    pub fn push_instance<'a, T: InstanceGen<M, ImgObjInstance> + 'a>(
         &mut self, 
         instance: &T, 
     ) {
         instance.generate(&mut self.instances);
     }
 }
-impl super::Simple2DRender for ImgObjRender {
+impl<M: InstanceModifier<ImgObjInstance>> super::Simple2DRender for ImgObjRender<M> {
     type Shared<'a> = (
         &'a SquareShared, 
         &'a ImagedShared, 
@@ -272,6 +294,7 @@ impl super::Simple2DRender for ImgObjRender {
     ) {
         self.instance_buffer = self.instances.finish(
             gfx, 
+            &mut self.modifier, 
             &self.texture
         );
 

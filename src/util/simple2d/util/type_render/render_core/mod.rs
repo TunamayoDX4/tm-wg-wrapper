@@ -73,11 +73,11 @@ pub struct TextInstance {
     pub tex_rev: [bool; 2], 
     pub char_color: [f32; 4], 
 }
-impl Instance for TextInstance {
+impl Instance<()> for TextInstance {
     type Raw = TextInstanceRaw;
     type T = Texture;
 
-    fn as_raw(self, _value: &Self::T) -> Self::Raw {
+    fn as_raw(self, _context: &mut (), _value: &Self::T) -> Self::Raw {
         let position = self.position;
         let size = self.size;
         let rotation = [
@@ -106,10 +106,10 @@ impl Instance for TextInstance {
     }
     
 }
-impl InstanceGen<TextInstance> for TextInstance {
+impl InstanceGen<(), TextInstance> for TextInstance {
     fn generate(
         &self, 
-        instances: &mut InstanceArray<TextInstance>, 
+        instances: &mut InstanceArray<(), TextInstance>, 
     ) {
         instances.push(*self)
     }
@@ -197,7 +197,7 @@ impl TextRenderShared {
 /// 画像用レンダラ
 pub struct TextRender {
     texture: Texture, 
-    instances: InstanceArray<TextInstance>, 
+    instances: InstanceArray<(), TextInstance>, 
     instance_buffer: Buffer, 
 }
 impl TextRender {
@@ -217,7 +217,7 @@ impl TextRender {
         let mut instances = InstanceArray::new();
 
         // インスタンスバッファの初期化
-        let instance_buffer = instances.finish(gfx, &texture);
+        let instance_buffer = instances.finish(gfx, &mut (), &texture);
 
         Self {
             texture, 
@@ -227,7 +227,7 @@ impl TextRender {
     }
 
     /// インスタンスの更新
-    pub fn push_instance<'a, T: InstanceGen<TextInstance> + 'a>(
+    pub fn push_instance<'a, T: InstanceGen<(), TextInstance> + 'a>(
         &mut self, 
         instance: &T, 
     ) {
@@ -254,6 +254,7 @@ impl Simple2DRender for TextRender {
     ) {
         self.instance_buffer = self.instances.finish(
             gfx, 
+            &mut (), 
             &self.texture
         );
 

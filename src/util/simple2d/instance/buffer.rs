@@ -1,14 +1,14 @@
 use wgpu::util::DeviceExt;
 
-use super::{
-    Instance, 
-};
+use super::Instance;
 
-pub(crate) struct RawInstanceBuffer<I: Instance> {
+pub(crate) struct RawInstanceBuffer<C, I: Instance<C>> {
+    _dummy: std::marker::PhantomData<C>, 
     pub(crate) instances: Vec<I::Raw>, 
 }
-impl<I: Instance> RawInstanceBuffer<I> {
+impl<C, I: Instance<C>> RawInstanceBuffer<C, I> {
     pub fn new() -> Self { Self {
+        _dummy: std::marker::PhantomData, 
         instances: Vec::new(),
     }}
 
@@ -26,32 +26,40 @@ impl<I: Instance> RawInstanceBuffer<I> {
     }
 }
 
-pub(crate) struct InstanceBuffer<I: Instance> {
+pub(crate) struct InstanceBuffer<C, I: Instance<C>> {
+    _dummy: std::marker::PhantomData<C>, 
     buffer: Vec<Option<I>>, 
 }
-impl<I: Instance> InstanceBuffer<I> {
-    pub fn new() -> Self { Self { buffer: Vec::new() } }
+impl<C, I: Instance<C>> InstanceBuffer<C, I> {
+    pub fn new() -> Self { Self { 
+        _dummy: std::marker::PhantomData,     
+        buffer: Vec::new() 
+    } }
     pub fn push(&mut self, instance: I) {
         self.buffer.push(Some(instance))
     }
     pub(crate) fn finish(
         &mut self, 
-        ria: &mut RawInstanceBuffer<I>, 
+        ria: &mut RawInstanceBuffer<C, I>, 
+        context: &mut C, 
         value: &I::T, 
     ) {
         ria.instances.clear();
         self.buffer.iter_mut()
             .filter_map(|v| v.take())
-            .for_each(|i| ria.instances.push(i.as_raw(value)));
+            .for_each(|i| ria.instances.push(i.as_raw(
+                context, 
+                value, 
+            )));
         self.buffer.clear();
     }
 }
 
-pub struct InstanceArray<I: Instance> {
-    raw: RawInstanceBuffer<I>, 
-    bake: InstanceBuffer<I>, 
+pub struct InstanceArray<C, I: Instance<C>> {
+    raw: RawInstanceBuffer<C, I>, 
+    bake: InstanceBuffer<C, I>, 
 }
-impl<I: Instance> InstanceArray<I> {
+impl<C, I: Instance<C>> InstanceArray<C, I> {
     pub fn new() -> Self { Self {
         raw: RawInstanceBuffer::new(),
         bake: InstanceBuffer::new(),
@@ -64,9 +72,14 @@ impl<I: Instance> InstanceArray<I> {
     pub fn finish(
         &mut self, 
         gfx: &crate::ctx::gfx::GfxCtx, 
+        context: &mut C, 
         value: &I::T, 
     ) -> wgpu::Buffer {
-        self.bake.finish(&mut self.raw, value);
+        self.bake.finish(
+            &mut self.raw, 
+            context, 
+            value, 
+        );
         self.raw.gen_buffer(gfx)
     }
 

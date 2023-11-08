@@ -5,11 +5,11 @@ use super::instance::{
     InstanceGen, 
 };
 
-pub struct EntityHolder<_T: Instance, T: InstanceGen<_T>> {
+pub struct EntityHolder<_T: Instance<()>, T: InstanceGen<(), _T>> {
     _dummy: std::marker::PhantomData<_T>, 
     entity: Option<T>, 
 }
-impl<_T: Instance, T: InstanceGen<_T>> EntityHolder<_T, T> {
+impl<_T: Instance<()>, T: InstanceGen<(), _T>> EntityHolder<_T, T> {
     pub fn new(
         initializer: impl Into<T>, 
     ) -> Self { Self {
@@ -39,18 +39,18 @@ impl<_T: Instance, T: InstanceGen<_T>> EntityHolder<_T, T> {
         self.entity.as_mut().map(|t| f(t))
     }
 }
-impl<_T: Instance, T: InstanceGen<_T>> InstanceGen<_T> for EntityHolder<_T, T> {
-    fn generate(&self, instances: &mut super::instance::buffer::InstanceArray<_T>) {
+impl<_T: Instance<()>, T: InstanceGen<(), _T>> InstanceGen<(), _T> for EntityHolder<_T, T> {
+    fn generate(&self, instances: &mut super::instance::buffer::InstanceArray<(), _T>) {
         self.entity.as_ref().map(|e| e.generate(instances));
     }
 }
 
-pub struct EntityArray<_T: Instance, T: InstanceGen<_T>> {
+pub struct EntityArray<_T: Instance<()>, T: InstanceGen<(), _T>> {
     _dummy: std::marker::PhantomData<_T>, 
     entity: Vec<Option<T>>, 
     remove_queue: VecDeque<usize>, 
 }
-impl<_T: Instance, T: InstanceGen<_T>> EntityArray<_T, T>{
+impl<_T: Instance<()>, T: InstanceGen<(), _T>> EntityArray<_T, T>{
     pub fn new(
         initializer: impl IntoIterator<Item = T>, 
     ) -> Self { 
@@ -160,8 +160,8 @@ impl<_T: Instance, T: InstanceGen<_T>> EntityArray<_T, T>{
             )
     }
 }
-impl<_T: Instance, T: InstanceGen<_T>> InstanceGen<_T> for EntityArray<_T, T> {
-    fn generate(&self, instances: &mut super::instance::buffer::InstanceArray<_T>) {
+impl<_T: Instance<()>, T: InstanceGen<(), _T>> InstanceGen<(), _T> for EntityArray<_T, T> {
+    fn generate(&self, instances: &mut super::instance::buffer::InstanceArray<(), _T>) {
         self.entity.iter()
             .filter_map(|e| e.as_ref())
             .for_each(|e| e.generate(instances));
@@ -169,13 +169,13 @@ impl<_T: Instance, T: InstanceGen<_T>> InstanceGen<_T> for EntityArray<_T, T> {
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct EntityRef<'a, _T: Instance, T: InstanceGen<_T>> {
+pub struct EntityRef<'a, _T: Instance<()>, T: InstanceGen<(), _T>> {
     _dummy: std::marker::PhantomData<_T>, 
     pub idx: usize, 
     pub entity: &'a T, 
 }
 
-pub struct EntityRefMut<'a, _T: Instance, T: InstanceGen<_T>> {
+pub struct EntityRefMut<'a, _T: Instance<()>, T: InstanceGen<(), _T>> {
     _dummy: std::marker::PhantomData<_T>, 
     pub idx: usize, 
     pub entity: &'a mut T, 
