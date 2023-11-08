@@ -7,7 +7,7 @@
 use std::{
     hash::Hash, 
     collections::VecDeque, 
-    borrow::Borrow, 
+    borrow::Borrow,  
 };
 
 use hashbrown::HashMap;
@@ -313,10 +313,14 @@ impl<'a, 'b, K, T, Tpt0, Tpt1, Q> LazyInserter<'a, 'b, K, T, Tpt0, Tpt1, Q> wher
         self, 
         part: Tpt1, 
     ) {
-        self.ref_to.memory[self.idx] = Some(RevRefElement { 
+        let e = Some(RevRefElement {
             elem: (self.part, part).into(), 
-            key: self.key.to_owned(),  
-        })
+            key: self.key.to_owned(), 
+        });
+        match self.ref_to.memory.get_mut(self.idx) {
+            Some(mem) => *mem = e, 
+            None => self.ref_to.memory.push(e), 
+        }
     }
 }
 
