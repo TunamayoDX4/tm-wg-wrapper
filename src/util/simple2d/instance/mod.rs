@@ -6,13 +6,12 @@ pub trait InstanceRaw where
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a>;
 }
 
-pub trait Instance: Send + Sync + Sized {
+pub trait Instance<V>: Send + Sync + Sized {
     type Raw: InstanceRaw;
-    type T;
 
-    fn as_raw(self, value: &Self::T) -> Self::Raw;
+    fn as_raw(self, value: &V) -> Self::Raw;
 }
 
-pub trait InstanceGen<I: Instance>: Send + Sync {
-    fn generate(&self, instances: &mut buffer::InstanceArray<I>);
+pub trait InstanceGen<V, I: Instance<V>>: Send + Sync {
+    fn generate(&self, instances: &mut buffer::InstanceArray<V, I>);
 }

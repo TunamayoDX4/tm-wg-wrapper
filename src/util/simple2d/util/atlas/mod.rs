@@ -194,26 +194,37 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
         self.get_mut(self.get_id(key)? as usize)
     }
 
-    pub fn insert<Q>(
+    pub fn insert<
+        'a, 
+        Q, 
+    >(
         &mut self, 
-        key: &Q, 
-        ud: T, 
+        key: &'a Q, 
         size: Option<types::SqSize>, 
     ) -> Result<(
-        usize, Option<impl Iterator<Item = (usize, &mut [P])>>
+        super::rev_ref::LazyInserter<
+            '_, 
+            'a, 
+            K, 
+            elem::AtlasElem<T, C::ControllerElemData>, 
+            (Option<elem::AtlasMemParam>, C::ControllerElemData), 
+            T, 
+            Q, 
+        >, 
+        Option<impl Iterator<Item = (usize, &mut [P])>>, 
     ), C::InsertError> where
         Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
         K: std::borrow::Borrow<Q>, 
     {
-        let (id, memp) = self.inserter.insert(
+        let udref = self.inserter.insert(
             &mut self.memory, 
             &mut self.elem, 
             key, 
             size, 
-            ud
         )?;
+        let memp = udref.part().0;
         Ok((
-            id, 
+            udref, 
             memp.map(|memp| self.memory.get_obj_mut(&memp))
         ))
     }
@@ -271,18 +282,29 @@ pub trait AtlasController<const BL: usize, P, K, T> where
     type ControllerElemData: Sized;
     
     /// # 挿入処理
-    fn insert<Q: Eq + Hash + ?Sized + ToOwned<Owned = K>>(
+    fn insert<
+        'a, 
+        'b, 
+        Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
+    >(
         &mut self, 
         atlas: &mut memory::AtlasMem<BL, P>, 
-        elem: &mut super::rev_ref::RevRefContainer<
+        elem: &'a mut super::rev_ref::RevRefContainer<
             K, 
             elem::AtlasElem<T, Self::ControllerElemData>
         >, 
-        key: &Q, 
+        key: &'b Q, 
         size: Option<types::SqSize>, 
-        ud: T, 
-    ) -> Result<(usize, Option<elem::AtlasMemParam>), Self::InsertError> where
-        K: std::borrow::Borrow<Q>
+    ) -> Result<super::rev_ref::LazyInserter<
+            'a, 
+            'b, 
+            K, 
+            elem::AtlasElem<T, Self::ControllerElemData>, 
+            (Option<elem::AtlasMemParam>, Self::ControllerElemData), 
+            T, 
+            Q
+    >, Self::InsertError> where
+        K: std::borrow::Borrow<Q>, 
     ;
 
     /// # 除去処理

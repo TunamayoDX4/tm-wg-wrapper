@@ -73,11 +73,10 @@ pub struct TextInstance {
     pub tex_rev: [bool; 2], 
     pub char_color: [f32; 4], 
 }
-impl Instance for TextInstance {
+impl Instance<Texture> for TextInstance {
     type Raw = TextInstanceRaw;
-    type T = Texture;
 
-    fn as_raw(self, _value: &Self::T) -> Self::Raw {
+    fn as_raw(self, _value: &Texture) -> Self::Raw {
         let position = self.position;
         let size = self.size;
         let rotation = [
@@ -106,10 +105,10 @@ impl Instance for TextInstance {
     }
     
 }
-impl InstanceGen<TextInstance> for TextInstance {
+impl InstanceGen<Texture, TextInstance> for TextInstance {
     fn generate(
         &self, 
-        instances: &mut InstanceArray<TextInstance>, 
+        instances: &mut InstanceArray<Texture, TextInstance>, 
     ) {
         instances.push(*self)
     }
@@ -197,7 +196,7 @@ impl TextRenderShared {
 /// 画像用レンダラ
 pub struct TextRender {
     texture: Texture, 
-    instances: InstanceArray<TextInstance>, 
+    instances: InstanceArray<Texture, TextInstance>, 
     instance_buffer: Buffer, 
 }
 impl TextRender {
@@ -227,7 +226,7 @@ impl TextRender {
     }
 
     /// インスタンスの更新
-    pub fn push_instance<'a, T: InstanceGen<TextInstance> + 'a>(
+    pub fn push_instance<'a, T: InstanceGen<Texture, TextInstance> + 'a>(
         &mut self, 
         instance: &T, 
     ) {

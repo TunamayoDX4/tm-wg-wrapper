@@ -1,13 +1,11 @@
 use wgpu::util::DeviceExt;
 
-use super::{
-    Instance, 
-};
+use super::Instance;
 
-pub(crate) struct RawInstanceBuffer<I: Instance> {
+pub(crate) struct RawInstanceBuffer<V, I: Instance<V>> {
     pub(crate) instances: Vec<I::Raw>, 
 }
-impl<I: Instance> RawInstanceBuffer<I> {
+impl<V, I: Instance<V>> RawInstanceBuffer<V, I> {
     pub fn new() -> Self { Self {
         instances: Vec::new(),
     }}
@@ -26,18 +24,22 @@ impl<I: Instance> RawInstanceBuffer<I> {
     }
 }
 
-pub(crate) struct InstanceBuffer<I: Instance> {
+pub(crate) struct InstanceBuffer<V, I: Instance<V>> {
+    _dummy: std::marker::PhantomData<V>, 
     buffer: Vec<Option<I>>, 
 }
-impl<I: Instance> InstanceBuffer<I> {
-    pub fn new() -> Self { Self { buffer: Vec::new() } }
+impl<V, I: Instance<V>> InstanceBuffer<V, I> {
+    pub fn new() -> Self { Self { 
+        _dummy: std::marker::PhantomData, 
+        buffer: Vec::new(), 
+    } }
     pub fn push(&mut self, instance: I) {
         self.buffer.push(Some(instance))
     }
     pub(crate) fn finish(
         &mut self, 
-        ria: &mut RawInstanceBuffer<I>, 
-        value: &I::T, 
+        ria: &mut RawInstanceBuffer<V, I>, 
+        value: &V, 
     ) {
         ria.instances.clear();
         self.buffer.iter_mut()
@@ -47,11 +49,11 @@ impl<I: Instance> InstanceBuffer<I> {
     }
 }
 
-pub struct InstanceArray<I: Instance> {
-    raw: RawInstanceBuffer<I>, 
-    bake: InstanceBuffer<I>, 
+pub struct InstanceArray<V, I: Instance<V>> {
+    raw: RawInstanceBuffer<V, I>, 
+    bake: InstanceBuffer<V, I>, 
 }
-impl<I: Instance> InstanceArray<I> {
+impl<V, I: Instance<V>> InstanceArray<V, I> {
     pub fn new() -> Self { Self {
         raw: RawInstanceBuffer::new(),
         bake: InstanceBuffer::new(),
@@ -64,7 +66,7 @@ impl<I: Instance> InstanceArray<I> {
     pub fn finish(
         &mut self, 
         gfx: &crate::ctx::gfx::GfxCtx, 
-        value: &I::T, 
+        value: &V, 
     ) -> wgpu::Buffer {
         self.bake.finish(&mut self.raw, value);
         self.raw.gen_buffer(gfx)

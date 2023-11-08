@@ -15,3 +15,22 @@ pub struct AtlasElem<T, I> where
     pub ud: T, 
     pub insert_data: I, 
 }
+impl<T: Sized, I> From<(
+    (
+        Option<AtlasMemParam>, 
+        I, 
+    ), 
+    T, 
+)> for AtlasElem<T, I> {
+    fn from(value: (
+        (
+            Option<AtlasMemParam>, 
+            I, 
+        ), 
+        T, 
+    )) -> Self { Self {
+        memp: value.0.0,
+        ud: value.1,
+        insert_data: value.0.1,
+    }}
+}

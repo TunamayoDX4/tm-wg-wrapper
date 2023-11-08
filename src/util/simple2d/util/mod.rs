@@ -3,6 +3,7 @@
 pub mod rev_ref;
 pub mod atlas;
 pub mod type_render;
+pub mod rdr_atlas_obj;
 
 pub mod prelude {
     pub use super::{

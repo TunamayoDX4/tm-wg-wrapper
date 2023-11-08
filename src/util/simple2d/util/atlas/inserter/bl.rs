@@ -104,21 +104,32 @@ impl<
     type RemoveError = error::BLRemoveError;
     type ControllerElemData = ();
 
-    fn insert<Q: Eq + Hash + ?Sized + ToOwned<Owned = K>>(
+    fn insert<
+        'a, 
+        'b, 
+        Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
+    >(
         &mut self, 
         atlas: &mut super::AtlasMem<BL, P>, 
-        elem: &mut super::RevRefContainer<
+        elem: &'a mut super::RevRefContainer<
             K, 
             super::AtlasElem<T, Self::ControllerElemData>
         >, 
-        key: &Q, 
+        key: &'b Q, 
         size: Option<super::SqSize>, 
-        ud: T, 
     ) -> Result<
-        (usize, Option<super::AtlasMemParam>), 
+        super::super::super::rev_ref::LazyInserter<
+            'a, 
+            'b, 
+            K, 
+            super::AtlasElem<T, Self::ControllerElemData>, 
+            (Option<super::AtlasMemParam>, Self::ControllerElemData), 
+            T, 
+            Q, 
+        >, 
         Self::InsertError
     > where
-        K: std::borrow::Borrow<Q>
+        K: std::borrow::Borrow<Q>, 
     {match size {
         Some(size) => { if atlas.size.w() < size.w() 
             && atlas.size.h() < size.h() 
@@ -134,14 +145,12 @@ impl<
                 pos, 
                 size, 
             };
-
-            let id = elem.insert(
+            let li = elem.insert_lazy(
                 key, 
-                super::AtlasElem { 
-                    memp: Some(memp), 
-                    ud, 
-                    insert_data: () 
-                }
+                (
+                    Some(memp), 
+                    ()
+                )
             ).map_err(|_| error::BLInsertError::KeyDuplicate)?;
 
             // フラグの更新
@@ -188,20 +197,14 @@ impl<
                     (u32::MAX, NonZeroU32::new(u32::MAX).unwrap()), 
                 ])));
 
-            Ok((id, Some(memp)))
+            Ok(li)
         }}, 
         None => {
-            Ok((
-                elem.insert(
-                    key, 
-                    super::AtlasElem { 
-                        memp: None, 
-                        ud, 
-                        insert_data: () 
-                    }
-                ).map_err(|_| error::BLInsertError::KeyDuplicate)?, 
-                None
-            ))
+            let li = elem.insert_lazy(
+                key, 
+                (None, ())
+            ).map_err(|_| error::BLInsertError::KeyDuplicate)?;
+            Ok(li)
     }}}
 
     fn remove(

@@ -216,6 +216,40 @@ impl<K, T> RevRefContainer<K, T> where
         Ok(idx)
     }
 
+    /// 要素の遅延挿入
+    pub fn insert_lazy<'a, 'b, Q, Tpt0, Tpt1, IT>(
+        &'a mut self, 
+        key: &'b Q, 
+        elem_part: IT, 
+    ) -> Result<
+        LazyInserter<'a, 'b, K, T, Tpt0, Tpt1, Q>, 
+        IT, 
+    > where
+        Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
+        K: Borrow<Q>, 
+        T: From<(Tpt0, Tpt1)>, 
+        IT: IntoPart<T, Tpt0, Tpt1>, 
+        'a: 'b, 
+    {
+        if self.table.contains_key(key) { return Err(elem_part) }
+
+        let idx = self.remque.pop_front()
+            .unwrap_or(self.memory.len());
+
+        if self.table.insert(key.to_owned(), idx).is_some() {
+            // 論理エラー
+            unreachable!("logic error in rev_ref memory")
+        }
+
+        Ok(LazyInserter {
+            _dummy: std::marker::PhantomData,
+            ref_to: self,
+            key,
+            idx,
+            part: elem_part.part(),
+        })
+    }
+
     /// 要素の削除
     pub fn remove(
         &mut self, 
@@ -251,4 +285,49 @@ impl<K, T> RevRefContainer<K, T> where
             elem.elem, 
         ))
     }
+}
+
+/// 遅延挿入用のインサータ
+pub struct LazyInserter<'a, 'b, K, T, Tpt0, Tpt1, Q> where
+    K: Eq + Hash, 
+    T: From<(Tpt0, Tpt1)>, 
+    Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
+    'a: 'b, 
+{
+    _dummy: std::marker::PhantomData<Tpt1>, 
+    ref_to: &'a mut RevRefContainer<K, T>, 
+    key: &'b Q, 
+    idx: usize, 
+    part: Tpt0, 
+}
+impl<'a, 'b, K, T, Tpt0, Tpt1, Q> LazyInserter<'a, 'b, K, T, Tpt0, Tpt1, Q> where
+    K: Eq + Hash, 
+    T: From<(Tpt0, Tpt1)>, 
+    Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
+    'a: 'b, 
+{
+    pub fn part(&self) -> &Tpt0 { &self.part }
+    pub fn key(&self) -> &Q { self.key }
+    pub fn idx(&self) -> usize { self.idx }
+    pub fn insert(
+        self, 
+        part: Tpt1, 
+    ) {
+        self.ref_to.memory[self.idx] = Some(RevRefElement { 
+            elem: (self.part, part).into(), 
+            key: self.key.to_owned(),  
+        })
+    }
+}
+
+/// パーツに出来るやつ
+pub trait IntoPart<T, Tpt0, Tpt1> where
+    T: From<(Tpt0, Tpt1)>, 
+{
+    fn part(self) -> Tpt0;
+}
+impl<T, Tpt0, Tpt1> IntoPart<T, Tpt0, Tpt1> for Tpt0 where
+    T: From<(Tpt0, Tpt1)>, 
+{
+    fn part(self) -> Tpt0 { self }
 }

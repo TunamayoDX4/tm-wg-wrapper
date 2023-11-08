@@ -151,11 +151,10 @@ impl TypeAtlas {
 
         let idx = match self.atlas.insert(
             &char, 
-            (hm, rect_size.map(|(rs, r, _s)| (r, rs))), 
             rect_size.map(|(_, _, s)| s)
         )? {
             (
-                idx, 
+                li, 
                 Some(iter)
             ) => {
                 for (idx, p) in iter {
@@ -163,9 +162,18 @@ impl TypeAtlas {
                         .enumerate()
                         .for_each(|(i, px)| p[i] = *px);
                 }
+                let idx = li.idx();
+                li.insert((
+                    hm, 
+                    rect_size.map(|(
+                        rs, 
+                        r, 
+                        _s
+                    )| (r, rs))
+                ));
                 idx
             }, 
-            (idx, None) => idx, 
+            (li, None) => li.idx(), 
         };
 
         self.updated = true;

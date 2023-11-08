@@ -67,11 +67,10 @@ pub struct ImgObjInstance {
     pub tex_size: [f32; 2], 
     pub tex_rev: [bool; 2], 
 }
-impl Instance for ImgObjInstance {
+impl Instance<Texture> for ImgObjInstance {
     type Raw = ImgObjInstanceRaw;
-    type T = Texture;
 
-    fn as_raw(self, value: &Self::T) -> Self::Raw {
+    fn as_raw(self, value: &Texture) -> Self::Raw {
         let position = self.position;
         let size = self.size;
         let rotation = [
@@ -99,10 +98,13 @@ impl Instance for ImgObjInstance {
     }
     
 }
-impl InstanceGen<ImgObjInstance> for ImgObjInstance {
+impl InstanceGen<Texture, ImgObjInstance> for ImgObjInstance {
     fn generate(
         &self, 
-        instances: &mut super::instance::buffer::InstanceArray<ImgObjInstance>, 
+        instances: &mut super::instance::buffer::InstanceArray<
+            Texture, 
+            ImgObjInstance
+        >, 
     ) {
         instances.push(*self)
     }
@@ -190,7 +192,7 @@ impl ImgObjRenderShared {
 /// 画像用レンダラ
 pub struct ImgObjRender {
     texture: Texture, 
-    instances: InstanceArray<ImgObjInstance>, 
+    instances: InstanceArray<Texture, ImgObjInstance>, 
     instance_buffer: Buffer, 
 }
 impl ImgObjRender {
@@ -248,7 +250,7 @@ impl ImgObjRender {
     pub fn get_texture(&mut self) -> &mut Texture { &mut self.texture }
 
     /// インスタンスの更新
-    pub fn push_instance<'a, T: InstanceGen<ImgObjInstance> + 'a>(
+    pub fn push_instance<'a, T: InstanceGen<Texture, ImgObjInstance> + 'a>(
         &mut self, 
         instance: &T, 
     ) {
