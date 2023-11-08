@@ -173,7 +173,14 @@ impl TypeAtlas {
                 ));
                 idx
             }, 
-            (li, None) => li.idx(), 
+            (li, None) => {
+                let idx = li.idx();
+                li.insert((
+                    hm, 
+                    None, 
+                ));
+                idx
+            }, 
         };
 
         self.updated = true;
