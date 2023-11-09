@@ -98,6 +98,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
                         |e| error::RdrInitError::IOError(e)
                     )?;
                 let mut br = std::io::BufReader::new(fp);
+                buf.clear();
                 br.read_to_end(&mut buf)
                     .map_err(
                         |e| error::RdrInitError::IOError(e)
