@@ -240,6 +240,19 @@ impl<K, I> AtlasRenderer<K, I> where
         }, image))
     }
 
+    pub fn get_atlas(&self) -> &Atlas<
+        4, 
+        u8, 
+        K, 
+        (
+            nalgebra::Point2<f32>, 
+            nalgebra::Vector2<f32>, 
+        ), 
+        I, 
+    > {
+        &self.module.atlas
+    }
+
     pub fn push_instance<
         'a, 
         T: InstanceGen<AtlasRenderingModule<K, I>, instance::AtlasObjInstance>, 
