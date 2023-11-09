@@ -65,7 +65,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
     >> where
         Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + 'a, 
         K: std::borrow::Borrow<Q>, 
-        P: AsRef<std::path::Path> + 'a, 
+        P: ?Sized + AsRef<std::path::Path> + 'a, 
         Ii: AtlasControllerInitializer<
             4, 
             u8, 
@@ -205,7 +205,7 @@ impl<K, I> AtlasRenderer<K, I> where
     > where
         Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + 'a, 
         K: std::borrow::Borrow<Q>, 
-        P: AsRef<std::path::Path> + 'a, 
+        P: ?Sized + AsRef<std::path::Path> + 'a, 
         Ii: AtlasControllerInitializer<
             4, 
             u8, 
