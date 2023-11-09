@@ -48,6 +48,7 @@ impl InstanceRaw for AtlasObjInstanceRaw {
     }
 }
 
+/// アトラスを用いたオブジェクト描画のためのインスタンス型
 pub struct AtlasObjInstance {
     pub atlas_id: usize, 
     pub position: nalgebra::Point2<f32>, 

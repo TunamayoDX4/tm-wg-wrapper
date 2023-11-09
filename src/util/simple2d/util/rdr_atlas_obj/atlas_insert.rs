@@ -24,7 +24,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
         usize, 
         error::RdrInitError<K, I, Ii>, 
     > where
-        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + std::fmt::Debug, 
+        Q: Eq + Hash + ?Sized + ToOwned<Owned = K>, 
         K: std::borrow::Borrow<Q>, 
         C: std::ops::Deref<Target = [u8]>, 
         Ii: AtlasControllerInitializer<
@@ -61,7 +61,6 @@ impl<K, I> AtlasRenderingModule<K, I> where
             .as_ref()
             .unwrap()
             .clone();
-        println!("{key:?}, {amp:?}");
         lazy_inserter.insert(super::AtlasElemParam {
             texture_size: std::array::from_fn(|
                 i
