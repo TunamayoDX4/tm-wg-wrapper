@@ -44,7 +44,7 @@ fn vs_main(
         ) + (
             model.tex_coord
             * (
-                instnace.tex_size
+                instance.tex_size
                 * instance.atlas_obj_size
             )
         )
