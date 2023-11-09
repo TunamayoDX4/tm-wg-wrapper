@@ -86,6 +86,7 @@ impl<
 }
 
 /// # BL法に基づいた挿入処理モジュール
+#[derive(Debug)]
 pub struct BLInserter {
 
     /// データが未使用であることを確認するためのフラグ
