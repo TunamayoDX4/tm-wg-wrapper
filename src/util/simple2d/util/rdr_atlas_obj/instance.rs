@@ -74,6 +74,7 @@ impl<
             _, 
             _, 
         ) = value.atlas.get(self.atlas_id).unwrap();
+        println!("{coord}, {size}");
         Self::Raw {
             position: self.position.into(),
             size: self.size.into(),
