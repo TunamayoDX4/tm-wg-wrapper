@@ -61,19 +61,11 @@ impl<K, I> AtlasRenderingModule<K, I> where
             .as_ref()
             .unwrap()
             .clone();
-        /*lazy_inserter.insert((
-            std::array::from_fn(|
-                i
-            | amp.pos.raw()[i] as f32 / atlas_size.raw()[i].get() as f32).into(), 
-            std::array::from_fn(|
-                i
-            | amp.size.raw()[i].get() as f32 / atlas_size.raw()[i].get() as f32).into(), 
-        ));*/
-        let tex_size = lazy_inserter.part().0.unwrap().size.clone();
+        println!("{amp:?}");
         lazy_inserter.insert(super::AtlasElemParam {
             texture_size: std::array::from_fn(|
                 i
-            | (tex_size.raw()[i].get() as f32).recip()).into(),
+            | (amp.size.raw()[i].get() as f32).recip()).into(),
             in_atras: (
                 std::array::from_fn(|
                     i
