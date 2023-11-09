@@ -38,7 +38,7 @@ fn vs_main(
     var out: VertexOutput;
 
     // 画像の座標計算を行う
-    /*out.tex_coords = (
+    out.tex_coords = (
         (instance.tex_coord
             * instance.atlas_obj_size
         ) + (
@@ -48,10 +48,10 @@ fn vs_main(
                 * instance.atlas_obj_size
             )
         )
-    ) + instance.atlas_obj_coord;*/
-    out.tex_coords = instance.atlas_obj_coord + (
+    ) + instance.atlas_obj_coord;
+    /*out.tex_coords = instance.atlas_obj_coord + (
         instance.atlas_obj_size * model.tex_coord
-    );
+    );*/
 
     // オブジェクトの座標返還を行う
     var pos_temp: vec4<f32>;
