@@ -50,7 +50,7 @@ fn vs_main(
         )
     ) + instance.atlas_obj_coord;*/
     out.tex_coords = instance.atlas_obj_coord + (
-        instance.atlas_obj_size * model.tex_coord, 
+        instance.atlas_obj_size * model.tex_coord
     );
 
     // オブジェクトの座標返還を行う
