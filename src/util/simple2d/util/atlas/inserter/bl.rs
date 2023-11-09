@@ -52,6 +52,7 @@ pub mod error {
 }
 
 /// # BL法に基づいた挿入処理モジュールのイニシャライザ
+#[derive(Debug)]
 pub struct BLInserterInitializer;
 impl<
     const BL: usize, 
