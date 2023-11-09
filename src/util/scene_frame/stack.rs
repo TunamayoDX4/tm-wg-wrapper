@@ -30,7 +30,7 @@ impl<S: Scene> SceneStack<S> {
     /// 処理
     pub fn process(
         &mut self, 
-        renderer: &S::Rdr,
+        renderer: &mut S::Rdr,
         frame_param: &mut S::Fpr, 
         window: &winit::window::Window, 
         gfx: &GfxCtx, 

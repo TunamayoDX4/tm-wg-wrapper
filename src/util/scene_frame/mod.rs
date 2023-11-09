@@ -28,7 +28,7 @@ pub trait FrameParam: Sized + Send + Sync + 'static {
     type Rdr: Send + Sync + Renderer;
     fn update(
         &mut self, 
-        renderer: &Self::Rdr, 
+        renderer: &mut Self::Rdr, 
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
@@ -93,7 +93,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        renderer: &Self::Rdr, 
+        renderer: &mut Self::Rdr, 
         frame_param: &mut Self::Fpr, 
         window: &Window, 
         gfx: &GfxCtx, 
@@ -253,9 +253,9 @@ impl<S> Frame<S::InitV> for SceneFrame<S> where
         gfx: &GfxCtx, 
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.fparam.update(&self.renderer)?;
+        self.fparam.update(&mut self.renderer)?;
         match self.scenes.process(
-            &self.renderer, 
+            &mut self.renderer, 
             &mut self.fparam, 
             window, 
             gfx, 
