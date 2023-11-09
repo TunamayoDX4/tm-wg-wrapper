@@ -10,12 +10,6 @@ struct CameraUniform {
 @group(1) @binding(0)
 var<uniform> camera: CameraUniform;
 
-struct AtlasParam {
-    atlas_size: vec2<f32>, 
-}
-@group(2) @binding(0)
-var<uniform> atlas_param: AtlasParam;
-
 struct VertexInput {
     @location(0) position: vec4<f32>, 
     @location(1) tex_coord: vec2<f32>, 
@@ -27,7 +21,7 @@ struct InstanceInput {
     @location(7) rotation: vec2<f32>, 
     @location(8) tex_coord: vec2<f32>, 
     @location(9) tex_size: vec2<f32>, 
-    @location(10) atlas_objcoord: vec2<f32>, 
+    @location(10) atlas_obj_coord: vec2<f32>, 
     @location(11) atlas_obj_size: vec2<f32>, 
 }
 
@@ -46,10 +40,8 @@ fn vs_main(
     // 画像の座標計算を行う
     var local_coords: vec2<f32>;
     local_coords = instance.tex_coord + (model.tex_coord * instance.tex_size);
-    var global_coords: vec2<f32>;
-    global_coords = instance.atlas_obj_coord 
-        + (model.tex_coord * instance.atlas_obj_size);
-    out.tex_coords = local_coords * atlas_param.atlas_size + global_coords;
+    out.tex_coords = local_coords * instance.atlas_obj_size 
+        + instance.atlas_obj_coord;
     
     // オブジェクトの座標返還を行う
     var pos_temp: vec4<f32>;

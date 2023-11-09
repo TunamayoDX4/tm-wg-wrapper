@@ -65,7 +65,7 @@ impl<
     T, 
 > for BLInserterInitializer {
     type Initialized = BLInserter;
-    type InitError = ();
+    type InitError = &'static str;
 
     fn initialize(
         self, 

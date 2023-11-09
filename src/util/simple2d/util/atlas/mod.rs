@@ -259,12 +259,16 @@ impl<const BL: usize, P, K, T, C> Atlas<BL, P, K, T, C> where
 
 /// # インサータの初期化用構造体
 pub trait AtlasControllerInitializer<const BL: usize, P, K, T> where
-    Self: Sized, 
+    Self: Send + Sync + Sized + 'static, 
     P: Copy, 
     K: Eq + Hash, 
 {
-    type Initialized: AtlasController<BL, P, K, T>;
-    type InitError;
+    type Initialized: AtlasController<BL, P, K, T> + Send + Sync;
+    type InitError: Into<Box<dyn std::error::Error>> 
+        + Send 
+        + Sync
+        + std::fmt::Debug 
+        + std::fmt::Display;
     fn initialize(
         self, 
         size: types::SqSize, 
@@ -274,12 +278,21 @@ pub trait AtlasControllerInitializer<const BL: usize, P, K, T> where
 
 /// # アトラスに要素を挿入するインサータのテンプレート
 pub trait AtlasController<const BL: usize, P, K, T> where
+    Self: Send + Sync + 'static, 
     P: Copy, 
     K: Eq + Hash, 
 {
-    type InsertError;
-    type RemoveError;
-    type ControllerElemData: Sized;
+    type InsertError: Into<Box<dyn std::error::Error>> 
+        + Send
+        + Sync
+        + std::fmt::Debug
+        + std::fmt::Display;
+    type RemoveError: Into<Box<dyn std::error::Error>> 
+        + Send
+        + Sync
+        + std::fmt::Debug
+        + std::fmt::Display;
+    type ControllerElemData: Send + Sync + Sized;
     
     /// # 挿入処理
     fn insert<
