@@ -5,10 +5,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
     > + Send + Sync, 
 {
     pub(super) fn insert_atlas<Q, C, Ii>(
@@ -16,10 +13,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
             4, 
             u8, 
             K, 
-            (
-                nalgebra::Point2<f32>, 
-                nalgebra::Vector2<f32>, 
-            ), 
+            AtlasElemParam, 
             I, 
         >, 
         key: &Q, 
@@ -37,10 +31,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
             4, 
             u8, 
             K, 
-            (
-                nalgebra::Point2<f32>, 
-                nalgebra::Vector2<f32>, 
-            ), 
+            AtlasElemParam, 
             Initialized = I, 
         >, 
     {
@@ -70,14 +61,27 @@ impl<K, I> AtlasRenderingModule<K, I> where
             .as_ref()
             .unwrap()
             .clone();
-        lazy_inserter.insert((
+        /*lazy_inserter.insert((
             std::array::from_fn(|
                 i
             | amp.pos.raw()[i] as f32 / atlas_size.raw()[i].get() as f32).into(), 
             std::array::from_fn(|
                 i
             | amp.size.raw()[i].get() as f32 / atlas_size.raw()[i].get() as f32).into(), 
-        ));
+        ));*/
+        lazy_inserter.insert(super::AtlasElemParam {
+            texture_size: std::array::from_fn(|
+                i
+            | (atlas_size.raw()[i].get() as f32).recip()).into(),
+            in_atras: (
+                std::array::from_fn(|
+                    i
+                | amp.pos.raw()[i] as f32 / atlas_size.raw()[i].get() as f32).into(), 
+                std::array::from_fn(|
+                    i
+                | amp.size.raw()[i].get() as f32 / atlas_size.raw()[i].get() as f32).into(), 
+            ),
+        });
 
         for (i, pix) in iter.unwrap() {
             (0..4)

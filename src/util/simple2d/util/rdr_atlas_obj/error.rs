@@ -9,19 +9,13 @@ pub enum RdrInitError<K, I, Ii> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
     >, 
     Ii: AtlasControllerInitializer<
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
         Initialized = I, 
     >, 
 {
@@ -36,19 +30,13 @@ impl<K, I, Ii> std::fmt::Display for RdrInitError<K, I, Ii> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
     >, 
     Ii: AtlasControllerInitializer<
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
         Initialized = I, 
     >, 
 {
@@ -82,19 +70,13 @@ impl<K, I, Ii> std::error::Error for RdrInitError<K, I, Ii> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
     > + Debug, 
     Ii: AtlasControllerInitializer<
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
         Initialized = I, 
     > + Debug, 
 {}

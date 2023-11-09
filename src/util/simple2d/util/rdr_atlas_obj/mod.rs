@@ -21,19 +21,27 @@ pub mod error;
 pub mod atlas_insert;
 pub mod shared;
 
+/// アトラスの要素ごとのパラメータ
+pub struct AtlasElemParam {
+    /// テクスチャそのものの大きさの逆数
+    pub texture_size: nalgebra::Vector2<f32>, 
+    /// アトラス内部での座標および大きさ
+    pub in_atras: (
+        nalgebra::Point2<f32>, 
+        nalgebra::Vector2<f32>, 
+    ), 
+}
+
 pub struct AtlasRenderingModule<K, I> where
     K: Eq + Hash + Send + Sync + Sized + 'static, 
     I: AtlasController<
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
     > + Send + Sync, 
 {
-    atlas: Atlas<4, u8, K, (nalgebra::Point2<f32>, nalgebra::Vector2<f32>), I>, 
+    atlas: Atlas<4, u8, K, AtlasElemParam, I>, 
     atlas_modified: bool, 
     texture: Texture, 
 }
@@ -43,10 +51,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam,  
     > + Send + Sync, 
 {
     pub fn new<'a, Q, P, Ii>(
@@ -70,10 +75,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
             4, 
             u8, 
             K, 
-            (
-                nalgebra::Point2<f32>, 
-                nalgebra::Vector2<f32>, 
-            ), 
+            AtlasElemParam, 
             Initialized = I, 
         >, 
     {
@@ -164,10 +166,7 @@ pub struct AtlasRenderer<K, I> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+       AtlasElemParam, 
     > + Send + Sync, 
 {
     module: AtlasRenderingModule<K, I>, 
@@ -183,10 +182,7 @@ impl<K, I> AtlasRenderer<K, I> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        )
+        AtlasElemParam, 
     > + Send + Sync, 
 {
     pub fn new<'a, Q, P, Ii>(
@@ -210,10 +206,7 @@ impl<K, I> AtlasRenderer<K, I> where
             4, 
             u8, 
             K, 
-            (
-                nalgebra::Point2<f32>, 
-                nalgebra::Vector2<f32>, 
-            ), 
+            AtlasElemParam, 
             Initialized = I, 
         >, 
     {
@@ -244,10 +237,7 @@ impl<K, I> AtlasRenderer<K, I> where
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
         I, 
     > {
         &self.module.atlas
@@ -269,10 +259,7 @@ impl<
         4, 
         u8, 
         K, 
-        (
-            nalgebra::Point2<f32>, 
-            nalgebra::Vector2<f32>, 
-        ), 
+        AtlasElemParam, 
     > + Send + Sync, 
 > super::super::Simple2DRender for AtlasRenderer<K, I> {
     type Shared<'a> = (
