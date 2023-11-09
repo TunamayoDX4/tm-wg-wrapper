@@ -85,14 +85,14 @@ impl<
                 self.rotation.sin()
             ],
             tex_coord: std::array::from_fn(
-                |i| self.tex_coord[i] / texture_size[i] + if self.tex_rev[i] {
-                    self.tex_size[i] / texture_size[i]
+                |i| self.tex_coord[i] * texture_size[i] + if self.tex_rev[i] {
+                    self.tex_size[i] * texture_size[i]
                 } else {
                     0.
                 }
             ),
             tex_size: std::array::from_fn(
-                |i| self.tex_size[i] / texture_size[i] 
+                |i| self.tex_size[i] * texture_size[i] 
                     * if self.tex_rev[i] { -1. } else { 1. }
             ),
             atlas_object_coord: (*atlas_coord).into(),
