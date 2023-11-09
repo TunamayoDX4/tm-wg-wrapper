@@ -68,7 +68,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
     ), error::RdrInitError<
         K, I, Ii
     >> where
-        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + 'a, 
+        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + std::fmt::Debug + 'a, 
         K: std::borrow::Borrow<Q>, 
         P: ?Sized + AsRef<std::path::Path> + 'a, 
         Ii: AtlasControllerInitializer<
@@ -199,7 +199,7 @@ impl<K, I> AtlasRenderer<K, I> where
     ), 
         error::RdrInitError<K, I, Ii>, 
     > where
-        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + 'a, 
+        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + std::fmt::Debug + 'a, 
         K: std::borrow::Borrow<Q>, 
         P: ?Sized + AsRef<std::path::Path> + 'a, 
         Ii: AtlasControllerInitializer<
