@@ -25,7 +25,7 @@ pub mod stack;
 
 /// フレーム付属の値
 pub trait FrameParam: Sized + Send + Sync + 'static {
-    type Rdr: Send + Sync + Renderer;
+    type Rdr: Send + Sync;
     fn update(
         &mut self, 
         renderer: &mut Self::Rdr, 
@@ -34,7 +34,7 @@ pub trait FrameParam: Sized + Send + Sync + 'static {
 
 pub trait Scene: Sized + Send + Sync + 'static {
     type InitV;
-    type Rdr: Send + Sync + Renderer;
+    type Rdr: Send + Sync;
     type Fpr: Send + Sync + FrameParam<Rdr = Self::Rdr>;
     type PopV: Send + Sync;
 
@@ -111,13 +111,14 @@ pub trait Scene: Sized + Send + Sync + 'static {
     ) -> bool;
 
     /// 実際の描画
-    fn rendering(
+    fn rendering<'a>(
         &self, 
+        render_chain: RenderingChain<'a>, 
         depth: usize, 
         is_top: bool, 
-        renderer: &mut Self::Rdr, 
+        renderer: &Self::Rdr, 
         frame_param: &Self::Fpr, 
-    );
+    ) -> RenderingChain<'a>;
 
     /// ポップ時の処理
     fn pop(self) -> Self::PopV;
@@ -240,10 +241,10 @@ impl<S> Frame<S::InitV> for SceneFrame<S> where
         render_chain: RenderingChain<'r>, 
     ) -> RenderingChain<'r> {
         self.scenes.rendering(
+            render_chain, 
             &mut self.renderer, 
             &self.fparam, 
-        );
-        render_chain.rendering(&mut self.renderer)
+        )
     }
 
     fn update(

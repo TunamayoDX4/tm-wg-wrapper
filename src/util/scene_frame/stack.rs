@@ -123,24 +123,28 @@ impl<S: Scene> SceneStack<S> {
     }
 
     /// 描画処理
-    pub fn rendering(
+    pub fn rendering<'a>(
         &self, 
-        renderer: &mut S::Rdr, 
+        render_chain: RenderingChain<'a>, 
+        renderer: &S::Rdr, 
         frame_param: &S::Fpr, 
-    ) {
+    ) -> RenderingChain<'a> {
         let top = self.scenes.len() - 1;
-        self.scenes.iter()
+        let mut render_chain = Some(render_chain);
+        for (idx, scene) in self.scenes.iter()
             .enumerate()
             .filter(|(idx, s)| s.scene.require_rendering(
                 top - *idx, 
                 top == *idx
             ))
-            .for_each(|(idx, scene)| scene.scene.rendering(
-                top - idx, 
-                top == idx, 
-                renderer, 
-                frame_param, 
-            ));
+        { render_chain = Some(scene.scene.rendering(
+            render_chain.take().unwrap(), 
+            top - idx, 
+            top == idx, 
+            renderer, 
+            frame_param
+        ))}
+        render_chain.unwrap()
     }
 
     /// キー入力
