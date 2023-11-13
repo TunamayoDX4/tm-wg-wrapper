@@ -5,12 +5,12 @@ pub struct AtlasObjRenderShared {
     pub(super) pipeline: wgpu::RenderPipeline, 
 }
 impl AtlasObjRenderShared {
-    pub fn new(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         camera: &super::super::super::S2DCamera, 
         image: &super::super::super::ImagedShared, 
     ) -> Self {
-        let shader = gfx.device.create_shader_module(
+        let shader = gfx.wgpu_ctx.device.create_shader_module(
             wgpu::ShaderModuleDescriptor { 
                 label: Some("atlas 2d shader"), 
                 source: wgpu::ShaderSource::Wgsl(
@@ -20,7 +20,7 @@ impl AtlasObjRenderShared {
         );
 
         // パイプラインレイアウトの初期化
-        let pipeline_layout = gfx.device.create_pipeline_layout(
+        let pipeline_layout = gfx.wgpu_ctx.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("pipeline layout"), 
                 bind_group_layouts: &[
@@ -32,7 +32,7 @@ impl AtlasObjRenderShared {
         );
 
         // パイプラインの初期化
-        let pipeline = gfx.device.create_render_pipeline(
+        let pipeline = gfx.wgpu_ctx.device.create_render_pipeline(
             &wgpu::RenderPipelineDescriptor {
                 label: Some("sample pipeline"), 
                 layout: Some(&pipeline_layout), 
@@ -48,7 +48,7 @@ impl AtlasObjRenderShared {
                     module: &shader, 
                     entry_point: "fs_main", 
                     targets: &[Some(wgpu::ColorTargetState { 
-                        format: gfx.config.format, 
+                        format: gfx.wgpu_ctx.config.format, 
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING), 
                         write_mask: wgpu::ColorWrites::all() 
                     })]

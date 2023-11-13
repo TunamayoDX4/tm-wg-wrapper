@@ -15,17 +15,25 @@ pub mod sfx;
 pub mod frame;
 
 /// 全体のコンテキスト
-pub struct Context<I, F: frame::Frame<I>> {
+pub struct Context<I, F: frame::Frame<I, GCd>, GCd> where
+    GCd: Send + Sync, 
+{
     _dummy: std::marker::PhantomData<I>, 
     ev_loop: winit::event_loop::EventLoop<()>, 
     window: Arc<Window>, 
-    gfx: gfx::GfxCtx, 
+    gfx: gfx::GfxCtx<GCd>, 
     sfx: sfx::SfxCtx, 
     frame: F, 
 }
-impl<I, F: frame::Frame<I>> Context<I, F> {
+impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
+    GCd: Send + Sync, 
+{
     pub async fn new(
         frame_initializer: I, 
+        gfx_ctx_data_init: impl FnOnce(
+            &gfx::WinitCtx, 
+            &gfx::WGPUCtx, 
+        ) -> GCd, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
@@ -39,7 +47,10 @@ impl<I, F: frame::Frame<I>> Context<I, F> {
         let window = std::sync::Arc::new(window);
 
         // グラフィクスの初期化
-        let gfx = gfx::GfxCtx::new(&window).await?;
+        let gfx = gfx::GfxCtx::new(
+            &window, 
+            gfx_ctx_data_init, 
+        ).await?;
 
         // オーディオの初期化
         let sfx = sfx::SfxCtx::new(0.063)?;

@@ -33,7 +33,7 @@ impl<S: Scene> SceneHolder<S> {
         renderer: &mut S::Rdr, 
         frame_param: &mut S::Fpr, 
         window: &Window, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<
         (SceneIdent, SceneProcOp<S>), Box<dyn std::error::Error>

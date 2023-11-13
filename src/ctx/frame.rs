@@ -9,12 +9,15 @@ use winit::{
 };
 
 /// コンテキスト処理を抽象化し、また使いまわしが出来るようにするフレーム
-pub trait Frame<I>: Sized + Send + Sync + 'static {
+pub trait Frame<I, GCd> where
+    Self: Sized + Send + Sync + 'static, 
+    GCd: Send + Sync, 
+{
     fn window_builder() -> winit::window::WindowBuilder;
     fn new(
         initializer: I, 
         window: &winit::window::Window, 
-        gfx: &super::gfx::GfxCtx, 
+        gfx: &super::gfx::GfxCtx<GCd>, 
         sfx: &super::sfx::SfxCtx, 
     ) -> Result<Self, Box<dyn std::error::Error>>;
     fn input_key(
@@ -41,13 +44,13 @@ pub trait Frame<I>: Sized + Send + Sync + 'static {
     );
     fn rendering<'r>(
         &mut self, 
-        render_chain: super::gfx::RenderingChain<'r>, 
-    ) -> super::gfx::RenderingChain<'r>;
+        render_chain: super::gfx::RenderingChain<'r, GCd>, 
+    ) -> super::gfx::RenderingChain<'r, GCd>;
     fn update(
         &mut self, 
         window: &winit::window::Window, 
         ctrl: &mut ControlFlow, 
-        gfx: &super::gfx::GfxCtx, 
+        gfx: &super::gfx::GfxCtx<GCd>, 
         sfx: &super::sfx::SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>>;
 }

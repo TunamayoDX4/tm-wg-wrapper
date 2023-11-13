@@ -117,13 +117,13 @@ pub struct TextRenderShared {
     pipeline: RenderPipeline, 
 }
 impl TextRenderShared {
-    pub fn new(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         camera: &S2DCamera, 
         image_shared: &ImagedShared, 
     ) -> Self {
         // シェーダモジュールの読み込み
-        let shader = gfx.device.create_shader_module(
+        let shader = gfx.wgpu_ctx.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: Some("image shader"), 
                 source: wgpu::ShaderSource::Wgsl(
@@ -133,7 +133,7 @@ impl TextRenderShared {
         );
 
         // パイプラインレイアウトの初期化
-        let pipeline_layout = gfx.device.create_pipeline_layout(
+        let pipeline_layout = gfx.wgpu_ctx.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("pipeline layout"), 
                 bind_group_layouts: &[
@@ -145,7 +145,7 @@ impl TextRenderShared {
         );
 
         // パイプラインの初期化
-        let pipeline = gfx.device.create_render_pipeline(
+        let pipeline = gfx.wgpu_ctx.device.create_render_pipeline(
             &RenderPipelineDescriptor {
                 label: Some("sample pipeline"), 
                 layout: Some(&pipeline_layout), 
@@ -161,7 +161,7 @@ impl TextRenderShared {
                     module: &shader, 
                     entry_point: "fs_main", 
                     targets: &[Some(wgpu::ColorTargetState { 
-                        format: gfx.config.format, 
+                        format: gfx.wgpu_ctx.config.format, 
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING), 
                         write_mask: wgpu::ColorWrites::all() 
                     })]
@@ -198,8 +198,8 @@ pub struct TextRender {
     instance_buffer: Buffer, 
 }
 impl TextRender {
-    pub fn new(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         imaged_shared: &ImagedShared, 
         texture: impl AsRef<std::path::Path>, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -231,7 +231,7 @@ impl TextRender {
         instance.generate(&mut self.instances);
     }
 }
-impl Simple2DRender for TextRender {
+impl<GCd: Send + Sync> Simple2DRender<GCd> for TextRender {
     type Shared<'a> = (
         &'a SquareShared, 
         &'a ImagedShared, 
@@ -240,7 +240,7 @@ impl Simple2DRender for TextRender {
 
     fn rendering<'a>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         camera: &S2DCamera, 

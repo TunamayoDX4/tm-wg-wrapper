@@ -33,7 +33,7 @@ impl<S: Scene> SceneStack<S> {
         renderer: &mut S::Rdr,
         frame_param: &mut S::Fpr, 
         window: &winit::window::Window, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<SceneFrameCtrlParam, Box<dyn std::error::Error>> {
         let top = self.scenes.len() - 1;
@@ -125,10 +125,10 @@ impl<S: Scene> SceneStack<S> {
     /// 描画処理
     pub fn rendering<'a>(
         &self, 
-        render_chain: RenderingChain<'a>, 
+        render_chain: RenderingChain<'a, S::Rdr>, 
         renderer: &S::Rdr, 
         frame_param: &S::Fpr, 
-    ) -> RenderingChain<'a> {
+    ) -> RenderingChain<'a, S::Rdr> {
         let top = self.scenes.len() - 1;
         let mut render_chain = Some(render_chain);
         for (idx, scene) in self.scenes.iter()

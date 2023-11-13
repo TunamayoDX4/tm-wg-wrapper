@@ -24,11 +24,14 @@ pub mod physic;
 pub mod util;
 
 /// シンプルな2Dレンダラー
-pub trait Simple2DRender: Send + Sync + Sized + 'static {
+pub trait Simple2DRender<GCd> where
+    Self: Send + Sync + Sized + 'static, 
+    GCd: Send + Sync,     
+{
     type Shared<'a>: Send + Sync + Sized;
     fn rendering<'a>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         camera: &shared::S2DCamera, 

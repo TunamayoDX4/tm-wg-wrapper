@@ -187,10 +187,10 @@ impl TypeAtlas {
         Ok(self.get(idx).unwrap())
     }
 
-    pub fn write_texture(
+    pub fn write_texture<GCd: Send + Sync>(
         &mut self, 
         texture: &mut Texture, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<GCd>, 
         shared: &ImagedShared, 
     ) {
         if self.updated {

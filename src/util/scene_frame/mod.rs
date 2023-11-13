@@ -44,7 +44,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
     fn init_proc(
         init_v: Self::InitV, 
         window: &Window, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<Self::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<
         (
@@ -95,7 +95,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         renderer: &mut Self::Rdr, 
         frame_param: &mut Self::Fpr, 
         window: &Window, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<Self::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<
         SceneProcOp<Self>, 
@@ -112,12 +112,12 @@ pub trait Scene: Sized + Send + Sync + 'static {
     /// 実際の描画
     fn rendering<'a>(
         &self, 
-        render_chain: RenderingChain<'a>, 
+        render_chain: RenderingChain<'a, Self::Rdr>, 
         depth: usize, 
         is_top: bool, 
         renderer: &Self::Rdr, 
         frame_param: &Self::Fpr, 
-    ) -> RenderingChain<'a>;
+    ) -> RenderingChain<'a, Self::Rdr>;
 
     /// ポップ時の処理
     fn pop(self) -> Self::PopV;
@@ -163,7 +163,7 @@ pub struct SceneFrame<S: Scene> {
     fparam: S::Fpr, 
     renderer: S::Rdr, 
 }
-impl<S> Frame<S::InitV> for SceneFrame<S> where
+impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
     S: Scene, 
 {
 
@@ -174,7 +174,7 @@ impl<S> Frame<S::InitV> for SceneFrame<S> where
     fn new(
         initializer: S::InitV, 
         window: &winit::window::Window, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
         let (
@@ -237,8 +237,8 @@ impl<S> Frame<S::InitV> for SceneFrame<S> where
 
     fn rendering<'r>(
         &mut self, 
-        render_chain: RenderingChain<'r>, 
-    ) -> RenderingChain<'r> {
+        render_chain: RenderingChain<'r, S::Rdr>, 
+    ) -> RenderingChain<'r, S::Rdr> {
         self.scenes.rendering(
             render_chain, 
             &mut self.renderer, 
@@ -250,7 +250,7 @@ impl<S> Frame<S::InitV> for SceneFrame<S> where
         &mut self, 
         window: &winit::window::Window, 
         ctrl: &mut winit::event_loop::ControlFlow, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.fparam.update(&mut self.renderer)?;

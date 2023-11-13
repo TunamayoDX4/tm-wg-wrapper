@@ -54,8 +54,8 @@ impl<K, I> AtlasRenderingModule<K, I> where
         AtlasElemParam,  
     > + Send + Sync, 
 {
-    pub fn new<'a, Q, P, Ii>(
-        gfx_ctx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<'a, Q, P, Ii, GCd: Send + Sync>(
+        gfx_ctx: &crate::ctx::gfx::GfxCtx<GCd>, 
         imaged: &super::super::ImagedShared, 
         size: SqSize, 
         inserter_initializer: Ii, 
@@ -141,9 +141,9 @@ impl<K, I> AtlasRenderingModule<K, I> where
 
     }
 
-    pub fn update(
+    pub fn update<GCd: Send + Sync>(
         &mut self, 
-        gfx_ctx: &crate::ctx::gfx::GfxCtx, 
+        gfx_ctx: &crate::ctx::gfx::GfxCtx<GCd>, 
         imaged: &super::super::ImagedShared, 
     ) {
         if self.atlas_modified {
@@ -186,8 +186,8 @@ impl<K, I> AtlasRenderer<K, I> where
         AtlasElemParam, 
     > + Send + Sync, 
 {
-    pub fn new<'a, Q, P, Ii>(
-        gfx_ctx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<'a, Q, P, Ii, GCd: Send + Sync>(
+        gfx_ctx: &crate::ctx::gfx::GfxCtx<GCd>, 
         imaged: &super::super::ImagedShared, 
         size: SqSize, 
         inserter_initializer: Ii, 
@@ -262,7 +262,8 @@ impl<
         K, 
         AtlasElemParam, 
     > + Send + Sync, 
-> super::super::Simple2DRender for AtlasRenderer<K, I> {
+    GCd: Send + Sync, 
+> super::super::Simple2DRender<GCd> for AtlasRenderer<K, I> {
     type Shared<'a> = (
         &'a super::super::SquareShared, 
         &'a super::super::ImagedShared, 
@@ -271,7 +272,7 @@ impl<
 
     fn rendering<'a>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         camera: &crate::prelude::simple2d::shared::S2DCamera, 

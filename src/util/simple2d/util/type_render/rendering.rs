@@ -7,7 +7,7 @@ use super::super::super::{
 };
 use crate::ctx::gfx::GfxCtx;
 
-impl Simple2DRender for super::TypeRenderer {
+impl<GCd: Send + Sync> Simple2DRender<GCd> for super::TypeRenderer {
     type Shared<'a> = (
         &'a SquareShared, 
         &'a ImagedShared, 
@@ -16,7 +16,7 @@ impl Simple2DRender for super::TypeRenderer {
 
     fn rendering<'a>(
         &mut self, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<GCd>, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         camera: &S2DCamera, 

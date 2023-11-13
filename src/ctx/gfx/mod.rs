@@ -10,26 +10,43 @@ use wgpu::{
 };
 use winit::window::Window;
 
-/// グラフィック機能をまとめるコンテキスト
-pub struct GfxCtx {
+/// WGPUのコンテキスト
+pub struct WGPUCtx {
     pub surface: Surface, 
     pub device: Device, 
     pub queue: Queue, 
     pub config: SurfaceConfiguration, 
+}
+
+/// Winitのコンテキスト
+pub struct WinitCtx {
     pub window: Arc<Window>, 
 }
-impl GfxCtx {
+
+/// グラフィック機能をまとめるコンテキスト
+pub struct GfxCtx<D: Send + Sync> {
+    pub winit_ctx: WinitCtx, 
+    pub wgpu_ctx: WGPUCtx, 
+    pub data: D, 
+}
+impl<D: Send + Sync> GfxCtx<D> {
     pub async fn new(
         window: &Arc<Window>, 
+        dinit: impl FnOnce(
+            &WinitCtx, 
+            &WGPUCtx, 
+        ) -> D, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
     > {
-        // ウィンドウを保持するポインタのコピー
-        let window = window.clone();
-        
+        // winitのコンテキストの生成
+        let winit_ctx = WinitCtx {
+            window: window.clone(), 
+        };
+
         // ウィンドウサイズの取得
-        let size = window.inner_size();
+        let size = winit_ctx.window.inner_size();
 
         // WGPUのインスタンスの初期化
         let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
@@ -39,7 +56,7 @@ impl GfxCtx {
         
         // サーフェスの初期化
         let surface = unsafe {
-            instance.create_surface(&(*window))
+            instance.create_surface(&(*winit_ctx.window))
         }?;
 
         // アダプタ(GPUの仮想的なインスタンス)の取得
@@ -100,13 +117,25 @@ impl GfxCtx {
         // サーフェスへの設定の適用
         surface.configure(&device, &config);
 
-        // 処理成功
-        Ok(Self {
+        // WGPUコンテキストの生成
+        let wgpu_ctx = WGPUCtx {
             surface,
             device,
             queue,
             config,
-            window,
+        };
+
+        // データの初期化
+        let data = dinit(
+            &winit_ctx, 
+            &wgpu_ctx, 
+        );
+
+        // 処理成功
+        Ok(Self {
+            wgpu_ctx, 
+            winit_ctx, 
+            data, 
         })
     }
 
@@ -119,25 +148,28 @@ impl GfxCtx {
         let recfg_size = if let Some(new_size) = new_size {
             new_size
         } else {
-            self.window.inner_size()
+            self.winit_ctx.window.inner_size()
         };
 
         // ウィンドウ内部の面積がゼロでなければウィンドウサイズの調整処理をする
         if recfg_size.width != 0 && recfg_size.height != 0 {
-            self.config.width = recfg_size.width;
-            self.config.height = recfg_size.height;
+            self.wgpu_ctx.config.width = recfg_size.width;
+            self.wgpu_ctx.config.height = recfg_size.height;
         }
 
         // 設定処理の実行
-        self.surface.configure(&self.device, &self.config);
+        self.wgpu_ctx.surface.configure(
+            &self.wgpu_ctx.device, 
+            &self.wgpu_ctx.config
+        );
     }
 
     /// 描画準備
     pub fn rendering(
         &self, 
-    ) -> Result<RenderingChain, SurfaceError> {
+    ) -> Result<RenderingChain<D>, SurfaceError> {
         // 出力先の初期化
-        let output = self.surface.get_current_texture()?;
+        let output = self.wgpu_ctx.surface.get_current_texture()?;
         let view = output.texture.create_view(&Default::default());
         
         // チェーンを返す
@@ -146,27 +178,27 @@ impl GfxCtx {
 }
 
 /// レンダラ
-pub trait Renderer {
+pub trait Renderer<GCd: Send + Sync> {
     fn rendering(
         &mut self, 
         output: &SurfaceTexture, 
         view: &TextureView, 
-        gfx: &GfxCtx, 
+        gfx: &GfxCtx<GCd>, 
     );
 }
 
 /// 描画先を保持して描画するためのチェーン
-pub struct RenderingChain<'a> {
-    gfx: &'a GfxCtx, 
+pub struct RenderingChain<'a, GCd: Send + Sync> {
+    gfx: &'a GfxCtx<GCd>, 
     output: SurfaceTexture, 
     view: TextureView, 
 }
-impl<'a> RenderingChain<'a> {
+impl<'a, GCd: Send + Sync> RenderingChain<'a, GCd> {
 
     /// 描画ループ
     pub fn rendering(
         self, 
-        renderer: &mut impl Renderer, 
+        renderer: &mut impl Renderer<GCd>, 
     ) -> Self {
         renderer.rendering(
             &self.output, 

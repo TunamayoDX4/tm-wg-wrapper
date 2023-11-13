@@ -3,14 +3,14 @@ pub struct SquareShared {
     pub vertex: wgpu::Buffer, 
     pub index: wgpu::Buffer, 
 }
-impl SquareShared {
-    pub fn new(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+impl SquareShared where {
+    pub fn new<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
     ) -> Self {
         use wgpu::util::DeviceExt;
 
         // バーテックスバッファ
-        let vertex = gfx.device.create_buffer_init(
+        let vertex = gfx.wgpu_ctx.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor { 
                 label: Some("vertex buffer"), 
                 contents: bytemuck::cast_slice(super::raw::TEXED_VERTICES), 
@@ -19,7 +19,7 @@ impl SquareShared {
         );
 
         // インデックスバッファ
-        let index = gfx.device.create_buffer_init(
+        let index = gfx.wgpu_ctx.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor { 
                 label: Some("index buffer"), 
                 contents: bytemuck::cast_slice(super::raw::INDICES), 
@@ -39,11 +39,11 @@ pub struct ImagedShared {
     pub diffuse: wgpu::BindGroupLayout, 
 }
 impl ImagedShared {
-    pub fn new(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
     ) -> Self {
         // テクスチャ用のバインドグループレイアウト
-        let diffuse = gfx.device.create_bind_group_layout(
+        let diffuse = gfx.wgpu_ctx.device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor {
                 label: Some("diffuse bind group layout"),
                 entries: &[
@@ -82,9 +82,9 @@ pub struct S2DCamera {
     pub bg_layout: wgpu::BindGroupLayout, 
 }
 impl S2DCamera {
-    pub fn new(
+    pub fn new<GCd: Send + Sync>(
         camera: super::types::Camera, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
     ) -> Self {
         use wgpu::util::DeviceExt;
 
@@ -92,7 +92,7 @@ impl S2DCamera {
         let raw = camera.as_raw();
 
         // カメラ用のバッファ
-        let buffer = gfx.device.create_buffer_init(
+        let buffer = gfx.wgpu_ctx.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("camera buffer"),
                 contents: bytemuck::cast_slice(&[raw]),
@@ -101,7 +101,7 @@ impl S2DCamera {
         );
 
         // カメラのバインドグループレイアウトの生成
-        let bg_layout = gfx.device.create_bind_group_layout(
+        let bg_layout = gfx.wgpu_ctx.device.create_bind_group_layout(
             &wgpu::BindGroupLayoutDescriptor { 
                 label: Some("camera bindgroup"), 
                 entries: &[
@@ -120,7 +120,7 @@ impl S2DCamera {
         );
 
         // カメラのバインドグループ
-        let bg = gfx.device.create_bind_group(
+        let bg = gfx.wgpu_ctx.device.create_bind_group(
             &wgpu::BindGroupDescriptor {
                 label: Some("camera bindgroup"),
                 layout: &bg_layout,
@@ -143,12 +143,12 @@ impl S2DCamera {
 
     }
 
-    pub fn setting(
+    pub fn setting<GCd: Send + Sync>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
     ) -> &wgpu::BindGroup {
         self.raw = self.camera.as_raw();
-        gfx.queue.write_buffer(
+        gfx.wgpu_ctx.queue.write_buffer(
             &self.buffer, 
             0, 
             bytemuck::cast_slice(&[self.raw])

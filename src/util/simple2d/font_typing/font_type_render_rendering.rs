@@ -7,7 +7,7 @@ use super::{
     }
 };
 
-impl Simple2DRender for super::FontTypeRender {
+impl<GCd: Send + Sync> Simple2DRender<GCd> for super::FontTypeRender {
     type Shared<'a> = (
         &'a SquareShared, 
         &'a ImagedShared, 
@@ -16,7 +16,7 @@ impl Simple2DRender for super::FontTypeRender {
 
     fn rendering<'a>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         camera: &crate::prelude::simple2d::shared::S2DCamera, 

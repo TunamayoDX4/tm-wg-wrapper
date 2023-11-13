@@ -10,11 +10,11 @@ impl<V, I: Instance<V>> RawInstanceBuffer<V, I> {
         instances: Vec::new(),
     }}
 
-    pub fn gen_buffer(
+    pub fn gen_buffer<GCd: Send + Sync>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
     ) -> wgpu::Buffer {
-        gfx.device.create_buffer_init(
+        gfx.wgpu_ctx.device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("instance buffer"),
                 contents: bytemuck::cast_slice(self.instances.as_slice()),
@@ -63,9 +63,9 @@ impl<V, I: Instance<V>> InstanceArray<V, I> {
         self.bake.push(instance)
     }
 
-    pub fn finish(
+    pub fn finish<GCd: Send + Sync>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         value: &V, 
     ) -> wgpu::Buffer {
         self.bake.finish(&mut self.raw, value);

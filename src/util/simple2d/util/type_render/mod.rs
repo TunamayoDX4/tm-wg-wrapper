@@ -33,8 +33,8 @@ pub struct TypeRenderer {
     rdr: render_core::TextRender, 
 }
 impl TypeRenderer {
-    pub fn new(
-        gfx: &GfxCtx, 
+    pub fn new<GCd: Send + Sync>(
+        gfx: &GfxCtx<GCd>, 
         font: Font<'static>, 
         scale: Scale, 
         atlas_size: super::atlas::types::SqSize, 

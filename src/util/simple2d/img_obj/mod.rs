@@ -115,13 +115,13 @@ pub struct ImgObjRenderShared {
     pipeline: RenderPipeline, 
 }
 impl ImgObjRenderShared {
-    pub fn new(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         camera: &S2DCamera, 
         image_shared: &ImagedShared, 
     ) -> Self {
         // シェーダモジュールの読み込み
-        let shader = gfx.device.create_shader_module(
+        let shader = gfx.wgpu_ctx.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: Some("image shader"), 
                 source: wgpu::ShaderSource::Wgsl(
@@ -131,7 +131,7 @@ impl ImgObjRenderShared {
         );
 
         // パイプラインレイアウトの初期化
-        let pipeline_layout = gfx.device.create_pipeline_layout(
+        let pipeline_layout = gfx.wgpu_ctx.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("pipeline layout"), 
                 bind_group_layouts: &[
@@ -143,7 +143,7 @@ impl ImgObjRenderShared {
         );
 
         // パイプラインの初期化
-        let pipeline = gfx.device.create_render_pipeline(
+        let pipeline = gfx.wgpu_ctx.device.create_render_pipeline(
             &RenderPipelineDescriptor {
                 label: Some("sample pipeline"), 
                 layout: Some(&pipeline_layout), 
@@ -159,7 +159,7 @@ impl ImgObjRenderShared {
                     module: &shader, 
                     entry_point: "fs_main", 
                     targets: &[Some(wgpu::ColorTargetState { 
-                        format: gfx.config.format, 
+                        format: gfx.wgpu_ctx.config.format, 
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING), 
                         write_mask: wgpu::ColorWrites::all() 
                     })]
@@ -196,8 +196,8 @@ pub struct ImgObjRender {
     instance_buffer: Buffer, 
 }
 impl ImgObjRender {
-    pub fn new<C: std::ops::Deref<Target = [u8]>>(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn new<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         imaged_shared: &ImagedShared, 
         image: image::ImageBuffer<image::Rgba<u8>, C>, 
     ) -> Self {
@@ -221,8 +221,8 @@ impl ImgObjRender {
         }
     }
 
-    pub fn from_image(
-        gfx: &crate::ctx::gfx::GfxCtx, 
+    pub fn from_image<GCd: Send + Sync>(
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         imaged_shared: &ImagedShared, 
         texture: impl AsRef<std::path::Path>, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -257,7 +257,7 @@ impl ImgObjRender {
         instance.generate(&mut self.instances);
     }
 }
-impl super::Simple2DRender for ImgObjRender {
+impl<GCd: Send + Sync> super::Simple2DRender<GCd> for ImgObjRender {
     type Shared<'a> = (
         &'a SquareShared, 
         &'a ImagedShared, 
@@ -266,7 +266,7 @@ impl super::Simple2DRender for ImgObjRender {
 
     fn rendering<'a>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx, 
+        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
         encoder: &mut wgpu::CommandEncoder, 
         view: &wgpu::TextureView, 
         camera: &S2DCamera, 
