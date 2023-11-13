@@ -177,7 +177,7 @@ pub struct SqObjRender {
     instance_buffer: Buffer, 
 }
 impl SqObjRender {
-    pub fn new<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
+    pub fn new<GCd: Send + Sync>(
         gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
     ) -> Self {
 
