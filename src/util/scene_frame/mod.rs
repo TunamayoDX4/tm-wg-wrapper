@@ -244,6 +244,7 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
+        self.fparam.update(gfx)?;
         match self.scenes.process(
             &mut self.fparam, 
             gfx, 
