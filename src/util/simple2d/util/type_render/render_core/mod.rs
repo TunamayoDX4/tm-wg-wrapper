@@ -119,13 +119,13 @@ pub struct TextRenderShared {
     pipeline: RenderPipeline, 
 }
 impl TextRenderShared {
-    pub fn new<GCd: Send + Sync>(
-        gfx: &gfx::GfxCtx<GCd>, 
+    pub fn new(
+        gfx: &gfx::WGPUCtx, 
         camera: &S2DCamera, 
         image_shared: &ImagedShared, 
     ) -> Self {
         // シェーダモジュールの読み込み
-        let shader = gfx.wgpu_ctx.device.create_shader_module(
+        let shader = gfx.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: Some("image shader"), 
                 source: wgpu::ShaderSource::Wgsl(
@@ -135,7 +135,7 @@ impl TextRenderShared {
         );
 
         // パイプラインレイアウトの初期化
-        let pipeline_layout = gfx.wgpu_ctx.device.create_pipeline_layout(
+        let pipeline_layout = gfx.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("pipeline layout"), 
                 bind_group_layouts: &[
@@ -147,7 +147,7 @@ impl TextRenderShared {
         );
 
         // パイプラインの初期化
-        let pipeline = gfx.wgpu_ctx.device.create_render_pipeline(
+        let pipeline = gfx.device.create_render_pipeline(
             &RenderPipelineDescriptor {
                 label: Some("sample pipeline"), 
                 layout: Some(&pipeline_layout), 
@@ -163,7 +163,7 @@ impl TextRenderShared {
                     module: &shader, 
                     entry_point: "fs_main", 
                     targets: &[Some(wgpu::ColorTargetState { 
-                        format: gfx.wgpu_ctx.config.format, 
+                        format: gfx.config.format, 
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING), 
                         write_mask: wgpu::ColorWrites::all() 
                     })]
