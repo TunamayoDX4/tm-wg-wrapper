@@ -130,7 +130,8 @@ impl<S: Scene> SceneStack<S> {
             .enumerate()
             .filter(|(idx, s)| s.scene.require_rendering(
                 top - *idx, 
-                top == *idx
+                top == *idx, 
+                frame_param, 
             ))
         { render_chain = Some(scene.scene.rendering(
             render_chain.take().unwrap(), 

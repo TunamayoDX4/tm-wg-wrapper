@@ -91,7 +91,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        frame_param: &mut Self::Fpr, 
+        fparam: &Self::Fpr, 
         gfx: &GfxCtx<Self::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<
@@ -104,6 +104,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &self, 
         depth: usize, 
         is_top: bool, 
+        fparam: &Self::Fpr, 
     ) -> bool;
 
     /// 実際の描画
@@ -112,7 +113,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         render_chain: RenderingChain<'a, Self::Rdr>, 
         depth: usize, 
         is_top: bool, 
-        frame_param: &Self::Fpr, 
+        fparam: &Self::Fpr, 
     ) -> RenderingChain<'a, Self::Rdr>;
 
     /// ポップ時の処理
