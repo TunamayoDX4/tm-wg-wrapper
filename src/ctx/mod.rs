@@ -34,6 +34,11 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
             &gfx::WinitCtx, 
             &gfx::WGPUCtx, 
         ) -> GCd, 
+        dupdater: impl FnMut(
+            &gfx::WinitCtx, 
+            &gfx::WGPUCtx, 
+            &mut GCd, 
+        ) + 'static, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
@@ -50,6 +55,7 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
         let gfx = gfx::GfxCtx::new(
             &window, 
             gfx_ctx_data_init, 
+            dupdater, 
         ).await?;
 
         // オーディオの初期化

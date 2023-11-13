@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use parking_lot::{Mutex, RwLock, RwLockReadGuard};
 use wgpu::{
     Device, 
     Surface, 
@@ -23,11 +24,46 @@ pub struct WinitCtx {
     pub window: Arc<Window>, 
 }
 
+/// GfxCtxのデータ
+pub struct GCData<D: Send + Sync> {
+    data: RwLock<D>, 
+    updater: Mutex<Box<dyn FnMut(
+        &WinitCtx, 
+        &WGPUCtx, 
+        &mut D, 
+    )>>, 
+}
+impl<D: Send + Sync> GCData<D> {
+    pub fn new(
+        data: D, 
+        updater: impl FnMut(
+            &WinitCtx, 
+            &WGPUCtx, 
+            &mut D, 
+        ) + 'static, 
+    ) -> Self { Self {
+        data: RwLock::new(data),
+        updater: Mutex::new(Box::new(updater)),
+    }}
+    pub fn get(&self) -> RwLockReadGuard<D> { self.data.read() }
+    fn update(
+        &self, 
+        winit_ctx: &WinitCtx, 
+        wgpu_ctx: &WGPUCtx, 
+    ) {
+        self.updater.lock()(
+            winit_ctx, 
+            wgpu_ctx, 
+            &mut *self.data.write()
+        )
+    }
+}
+
 /// グラフィック機能をまとめるコンテキスト
 pub struct GfxCtx<D: Send + Sync> {
     pub winit_ctx: WinitCtx, 
     pub wgpu_ctx: WGPUCtx, 
-    pub data: D, 
+    pub data: GCData<D>, 
 }
 impl<D: Send + Sync> GfxCtx<D> {
     pub async fn new(
@@ -36,6 +72,11 @@ impl<D: Send + Sync> GfxCtx<D> {
             &WinitCtx, 
             &WGPUCtx, 
         ) -> D, 
+        dupdater: impl FnMut(
+            &WinitCtx, 
+            &WGPUCtx, 
+            &mut D, 
+        ) + 'static, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
@@ -135,7 +176,10 @@ impl<D: Send + Sync> GfxCtx<D> {
         Ok(Self {
             wgpu_ctx, 
             winit_ctx, 
-            data, 
+            data: GCData::new(
+                data, 
+                dupdater, 
+            ), 
         })
     }
 
@@ -171,6 +215,7 @@ impl<D: Send + Sync> GfxCtx<D> {
         // 出力先の初期化
         let output = self.wgpu_ctx.surface.get_current_texture()?;
         let view = output.texture.create_view(&Default::default());
+        self.data.update(&self.winit_ctx, &self.wgpu_ctx);
         
         // チェーンを返す
         Ok(RenderingChain { gfx: self, output, view })

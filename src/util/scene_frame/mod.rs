@@ -50,7 +50,6 @@ pub trait Scene: Sized + Send + Sync + 'static {
         (
             Vec<Self>, 
             Self::Fpr, 
-            Self::Rdr, 
         ), 
         Box<dyn std::error::Error>
     >;
@@ -92,7 +91,6 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        renderer: &mut Self::Rdr, 
         frame_param: &mut Self::Fpr, 
         window: &Window, 
         gfx: &GfxCtx<Self::Rdr>, 
@@ -115,7 +113,6 @@ pub trait Scene: Sized + Send + Sync + 'static {
         render_chain: RenderingChain<'a, Self::Rdr>, 
         depth: usize, 
         is_top: bool, 
-        renderer: &Self::Rdr, 
         frame_param: &Self::Fpr, 
     ) -> RenderingChain<'a, Self::Rdr>;
 
@@ -161,7 +158,6 @@ pub enum SceneFrameCtrlParam {
 pub struct SceneFrame<S: Scene> {
     scenes: stack::SceneStack<S>, 
     fparam: S::Fpr, 
-    renderer: S::Rdr, 
 }
 impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
     S: Scene, 
@@ -180,7 +176,6 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
         let (
             scenes, 
             fparam, 
-            renderer
         ) = S::init_proc(
             initializer, 
             window, 
@@ -194,7 +189,6 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
         Ok(Self {
             scenes,
             fparam,
-            renderer,
         })
     }
 
@@ -241,7 +235,6 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
     ) -> RenderingChain<'r, S::Rdr> {
         self.scenes.rendering(
             render_chain, 
-            &mut self.renderer, 
             &self.fparam, 
         )
     }
@@ -253,9 +246,7 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.fparam.update(&mut self.renderer)?;
         match self.scenes.process(
-            &mut self.renderer, 
             &mut self.fparam, 
             window, 
             gfx, 
