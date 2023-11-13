@@ -120,13 +120,13 @@ impl<S: Scene> SceneStack<S> {
 
     /// 描画処理
     pub fn rendering<'a>(
-        &self, 
+        &mut self, 
         render_chain: RenderingChain<'a, S::Rdr>, 
         frame_param: &S::Fpr, 
     ) -> RenderingChain<'a, S::Rdr> {
         let top = self.scenes.len() - 1;
         let mut render_chain = Some(render_chain);
-        for (idx, scene) in self.scenes.iter()
+        for (idx, scene) in self.scenes.iter_mut()
             .enumerate()
             .filter(|(idx, s)| s.scene.require_rendering(
                 top - *idx, 

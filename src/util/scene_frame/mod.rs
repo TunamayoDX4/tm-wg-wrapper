@@ -108,7 +108,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
 
     /// 実際の描画
     fn rendering<'a>(
-        &self, 
+        &mut self, 
         render_chain: RenderingChain<'a, Self::Rdr>, 
         depth: usize, 
         is_top: bool, 
