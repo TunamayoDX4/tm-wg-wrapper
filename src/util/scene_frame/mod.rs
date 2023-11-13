@@ -2,7 +2,6 @@ use crate::ctx::{
     frame::Frame, 
     gfx::{
         GfxCtx, 
-        Renderer, 
         RenderingChain, 
     }, 
     sfx::SfxCtx, 
