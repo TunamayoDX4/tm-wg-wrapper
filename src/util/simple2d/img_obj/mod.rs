@@ -115,7 +115,7 @@ pub struct ImgObjRenderShared {
     pipeline: RenderPipeline, 
 }
 impl ImgObjRenderShared {
-    pub fn new<GCd: Send + Sync>(
+    pub fn new(
         gfx: &crate::ctx::gfx::WGPUCtx, 
         camera: &S2DCamera, 
         image_shared: &ImagedShared, 

@@ -98,7 +98,7 @@ pub struct SqObjRenderShared {
     pipeline: RenderPipeline, 
 }
 impl SqObjRenderShared {
-    pub fn new<GCd: Send + Sync>(
+    pub fn new(
         gfx: &crate::ctx::gfx::WGPUCtx, 
         camera: &S2DCamera, 
         polygon_mode: wgpu::PolygonMode, 
