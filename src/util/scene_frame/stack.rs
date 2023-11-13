@@ -31,7 +31,6 @@ impl<S: Scene> SceneStack<S> {
     pub fn process(
         &mut self, 
         frame_param: &mut S::Fpr, 
-        window: &winit::window::Window, 
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<SceneFrameCtrlParam, Box<dyn std::error::Error>> {
@@ -43,7 +42,6 @@ impl<S: Scene> SceneStack<S> {
                     top - depth, 
                     depth == top, 
                     frame_param, 
-                    window, 
                     gfx, 
                     sfx, 
                 )

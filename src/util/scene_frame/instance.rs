@@ -31,7 +31,6 @@ impl<S: Scene> SceneHolder<S> {
         depth: usize, 
         is_top: bool, 
         frame_param: &mut S::Fpr, 
-        window: &Window, 
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<
@@ -41,7 +40,6 @@ impl<S: Scene> SceneHolder<S> {
             depth, 
             is_top, 
             frame_param, 
-            window, 
             gfx, 
             sfx, 
         ).map(|op| (self.ident.clone(), op))

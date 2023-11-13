@@ -48,7 +48,6 @@ pub trait Frame<I, GCd> where
     ) -> super::gfx::RenderingChain<'r, GCd>;
     fn update(
         &mut self, 
-        window: &winit::window::Window, 
         ctrl: &mut ControlFlow, 
         gfx: &super::gfx::GfxCtx<GCd>, 
         sfx: &super::sfx::SfxCtx, 

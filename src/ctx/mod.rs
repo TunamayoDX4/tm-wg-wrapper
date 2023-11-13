@@ -150,7 +150,6 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
                 // すべてのイベントの処理を終えた時の処理
                 Event::MainEventsCleared => {
                     if let Err(e) = self.frame.update(
-                        &self.window, 
                         ctrl, 
                         &self.gfx, 
                         &self.sfx, 
