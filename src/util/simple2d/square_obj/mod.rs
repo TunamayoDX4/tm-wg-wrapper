@@ -99,12 +99,12 @@ pub struct SqObjRenderShared {
 }
 impl SqObjRenderShared {
     pub fn new<GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         camera: &S2DCamera, 
         polygon_mode: wgpu::PolygonMode, 
     ) -> Self {
         // シェーダモジュールの読み込み
-        let shader = gfx.wgpu_ctx.device.create_shader_module(
+        let shader = gfx.device.create_shader_module(
             wgpu::ShaderModuleDescriptor {
                 label: Some("image shader"), 
                 source: wgpu::ShaderSource::Wgsl(
@@ -114,7 +114,7 @@ impl SqObjRenderShared {
         );
 
         // パイプラインレイアウトの初期化
-        let pipeline_layout = gfx.wgpu_ctx.device.create_pipeline_layout(
+        let pipeline_layout = gfx.device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("pipeline layout"), 
                 bind_group_layouts: &[
@@ -125,7 +125,7 @@ impl SqObjRenderShared {
         );
 
         // パイプラインの初期化
-        let pipeline = gfx.wgpu_ctx.device.create_render_pipeline(
+        let pipeline = gfx.device.create_render_pipeline(
             &RenderPipelineDescriptor {
                 label: Some("sample pipeline"), 
                 layout: Some(&pipeline_layout), 
@@ -141,7 +141,7 @@ impl SqObjRenderShared {
                     module: &shader, 
                     entry_point: "fs_main", 
                     targets: &[Some(wgpu::ColorTargetState { 
-                        format: gfx.wgpu_ctx.config.format, 
+                        format: gfx.config.format, 
                         blend: Some(wgpu::BlendState::ALPHA_BLENDING), 
                         write_mask: wgpu::ColorWrites::all() 
                     })]
