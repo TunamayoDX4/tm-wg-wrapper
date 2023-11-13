@@ -32,6 +32,11 @@ pub struct GCData<D: Send + Sync> {
         &WGPUCtx, 
         &mut D, 
     )>>, 
+    reconfigureer: Mutex<Box<dyn FnMut(
+        &WinitCtx, 
+        &WGPUCtx, 
+        &mut D, 
+    )>>, 
 }
 impl<D: Send + Sync> GCData<D> {
     pub fn new(
@@ -41,9 +46,15 @@ impl<D: Send + Sync> GCData<D> {
             &WGPUCtx, 
             &mut D, 
         ) + 'static, 
+        reconfigureer: impl FnMut(
+            &WinitCtx, 
+            &WGPUCtx, 
+            &mut D, 
+        ) + 'static, 
     ) -> Self { Self {
         data: RwLock::new(data),
         updater: Mutex::new(Box::new(updater)),
+        reconfigureer: Mutex::new(Box::new(reconfigureer)), 
     }}
     pub fn get(&self) -> RwLockReadGuard<D> { self.data.read() }
     fn update(
@@ -52,6 +63,17 @@ impl<D: Send + Sync> GCData<D> {
         wgpu_ctx: &WGPUCtx, 
     ) {
         self.updater.lock()(
+            winit_ctx, 
+            wgpu_ctx, 
+            &mut *self.data.write()
+        )
+    }
+    fn reconfiguer(
+        &self, 
+        winit_ctx: &WinitCtx, 
+        wgpu_ctx: &WGPUCtx, 
+    ) {
+        self.reconfigureer.lock()(
             winit_ctx, 
             wgpu_ctx, 
             &mut *self.data.write()
@@ -73,6 +95,11 @@ impl<D: Send + Sync> GfxCtx<D> {
             &WGPUCtx, 
         ) -> D, 
         dupdater: impl FnMut(
+            &WinitCtx, 
+            &WGPUCtx, 
+            &mut D, 
+        ) + 'static, 
+        dreconfigureer: impl FnMut(
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
@@ -179,6 +206,7 @@ impl<D: Send + Sync> GfxCtx<D> {
             data: GCData::new(
                 data, 
                 dupdater, 
+                dreconfigureer, 
             ), 
         })
     }
@@ -205,6 +233,12 @@ impl<D: Send + Sync> GfxCtx<D> {
         self.wgpu_ctx.surface.configure(
             &self.wgpu_ctx.device, 
             &self.wgpu_ctx.config
+        );
+
+        // データの再コンフィグ
+        self.data.reconfiguer(
+            &self.winit_ctx, 
+            &self.wgpu_ctx, 
         );
     }
 
