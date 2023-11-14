@@ -10,6 +10,8 @@ use winit::{
     }
 };
 
+use self::frame::FrameGlobal;
+
 pub mod gfx;
 pub mod sfx;
 pub mod frame;
@@ -23,6 +25,7 @@ pub struct Context<I, F: frame::Frame<I, GCd>, GCd> where
     window: Arc<Window>, 
     gfx: gfx::GfxCtx<GCd>, 
     sfx: sfx::SfxCtx, 
+    fglob: F::FrG, 
     frame: F, 
 }
 impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
@@ -68,7 +71,7 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
         let sfx = sfx::SfxCtx::new(0.063)?;
 
         // フレームの初期化
-        let frame = F::new(
+        let (fglob, frame) = F::new(
             frame_initializer, 
             &window, 
             &gfx, 
@@ -81,6 +84,7 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
             window, 
             gfx, 
             sfx, 
+            fglob, 
             frame, 
         })
     }
@@ -136,10 +140,14 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
                 // 描画の必要性が生じたときの処理
                 Event::RedrawRequested(
                     window_id
-                ) if self.window.id() == window_id => match self.gfx.rendering() {
+                ) if self.window.id() == window_id => match self.gfx.rendering(
+                    &self.fglob
+                ) {
                     Ok(
                         render_chain
-                    ) => self.frame.rendering(render_chain).present(), 
+                    ) => self.frame.rendering(
+                        render_chain
+                    ).present(), 
                     Err(wgpu::SurfaceError::Lost) => self.gfx.reconfigure(None), 
                     Err(wgpu::SurfaceError::OutOfMemory) => {
                         eprintln!("out of memory error occured.");
@@ -149,13 +157,23 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
                 }, 
                 // すべてのイベントの処理を終えた時の処理
                 Event::MainEventsCleared => {
-                    if let Err(e) = self.frame.update(
-                        ctrl, 
+                    match match self.fglob.update(
                         &self.gfx, 
-                        &self.sfx, 
+                        &self.sfx
                     ) {
-                        ret = Err(e);
-                        ctrl.set_exit();
+                        Ok(_) => self.frame.update(
+                            ctrl, 
+                            &self.fglob, 
+                            &self.gfx, 
+                            &self.sfx, 
+                        ), 
+                        e @ _ => e, 
+                    } {
+                        Ok(_) => self.window.request_redraw(), 
+                        Err(e) => {
+                            ret = Err(e);
+                            ctrl.set_exit();
+                        }
                     }
                     // 描画要求の発令
                     self.window.request_redraw(); 

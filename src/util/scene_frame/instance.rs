@@ -30,7 +30,7 @@ impl<S: Scene> SceneHolder<S> {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        frame_param: &mut S::Fpr, 
+        frame_param: &S::FrG, 
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<

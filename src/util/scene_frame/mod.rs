@@ -22,19 +22,12 @@ use winit::{
 pub mod instance;
 pub mod stack;
 
-/// フレーム付属の値
-pub trait FrameParam: Sized + Send + Sync + 'static {
-    type Rdr: Send + Sync;
-    fn update(
-        &mut self, 
-        gfx: &GfxCtx<Self::Rdr>, 
-    ) -> Result<(), Box<dyn std::error::Error>>;
-}
-
 pub trait Scene: Sized + Send + Sync + 'static {
     type InitV;
     type Rdr: Send + Sync;
-    type Fpr: Send + Sync + FrameParam<Rdr = Self::Rdr>;
+    type FrG: Send + Sync + crate::ctx::frame::FrameGlobal<
+        Self::Rdr, 
+    >;
     type PopV: Send + Sync;
 
     /// ウィンドウビルダの出力
@@ -49,7 +42,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
     ) -> Result<
         (
             Vec<Self>, 
-            Self::Fpr, 
+            Self::FrG, 
         ), 
         Box<dyn std::error::Error>
     >;
@@ -91,7 +84,7 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &mut self, 
         depth: usize, 
         is_top: bool, 
-        fparam: &Self::Fpr, 
+        fglob: &Self::FrG, 
         gfx: &GfxCtx<Self::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<
@@ -104,17 +97,15 @@ pub trait Scene: Sized + Send + Sync + 'static {
         &self, 
         depth: usize, 
         is_top: bool, 
-        fparam: &Self::Fpr, 
     ) -> bool;
 
     /// 実際の描画
-    fn rendering<'a>(
+    fn rendering<'a, 'b>(
         &mut self, 
-        render_chain: RenderingChain<'a, Self::Rdr>, 
+        render_chain: RenderingChain<'a, 'b, Self::Rdr, Self::FrG>, 
         depth: usize, 
-        is_top: bool, 
-        fparam: &Self::Fpr, 
-    ) -> RenderingChain<'a, Self::Rdr>;
+        is_top: bool,  
+    ) -> RenderingChain<'a, 'b, Self::Rdr, Self::FrG>;
 
     /// ポップ時の処理
     fn pop(self) -> Self::PopV;
@@ -157,11 +148,11 @@ pub enum SceneFrameCtrlParam {
 /// シーン・フレーム
 pub struct SceneFrame<S: Scene> {
     scenes: stack::SceneStack<S>, 
-    fparam: S::Fpr, 
 }
 impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
     S: Scene, 
 {
+    type FrG = S::FrG;
 
     fn window_builder() -> winit::window::WindowBuilder {
         S::window_builder()
@@ -172,7 +163,7 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
         window: &winit::window::Window, 
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
-    ) -> Result<Self, Box<dyn std::error::Error>> {
+    ) -> Result<(Self::FrG, Self), Box<dyn std::error::Error>> {
         let (
             scenes, 
             fparam, 
@@ -186,10 +177,14 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
             scenes
         );
 
-        Ok(Self {
-            scenes,
-            fparam,
-        })
+        let r = (
+            fparam, 
+            Self {
+                scenes, 
+            }
+        );
+
+        Ok(r)
     }
 
     fn input_key(
@@ -229,25 +224,24 @@ impl<S> Frame<S::InitV, S::Rdr> for SceneFrame<S> where
         self.scenes.window_resizing(size);
     }
 
-    fn rendering<'r>(
+    fn rendering<'r, 'f>(
         &mut self, 
-        render_chain: RenderingChain<'r, S::Rdr>, 
-    ) -> RenderingChain<'r, S::Rdr> {
+        render_chain: RenderingChain<'r, 'f, S::Rdr, Self::FrG>, 
+    ) -> RenderingChain<'r, 'f, S::Rdr, Self::FrG> {
         self.scenes.rendering(
             render_chain, 
-            &self.fparam, 
         )
     }
 
     fn update(
         &mut self, 
         ctrl: &mut winit::event_loop::ControlFlow, 
+        fglob: &Self::FrG, 
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>> {
-        self.fparam.update(gfx)?;
         match self.scenes.process(
-            &mut self.fparam, 
+            fglob, 
             gfx, 
             sfx, 
         )? {

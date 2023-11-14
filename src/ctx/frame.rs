@@ -8,18 +8,34 @@ use winit::{
     event_loop::ControlFlow
 };
 
+pub trait FrameGlobal<GCd> where
+    Self: Sized + Send + Sync + 'static, 
+    GCd: Send + Sync, 
+{
+    fn update(
+        &mut self, 
+        gfx: &super::gfx::GfxCtx<GCd>, 
+        sfx: &super::sfx::SfxCtx, 
+    ) -> Result<(), Box<dyn std::error::Error>>;
+}
+
 /// コンテキスト処理を抽象化し、また使いまわしが出来るようにするフレーム
 pub trait Frame<I, GCd> where
     Self: Sized + Send + Sync + 'static, 
     GCd: Send + Sync, 
 {
+    type FrG: FrameGlobal<GCd>;
+
     fn window_builder() -> winit::window::WindowBuilder;
     fn new(
         initializer: I, 
         window: &winit::window::Window, 
         gfx: &super::gfx::GfxCtx<GCd>, 
         sfx: &super::sfx::SfxCtx, 
-    ) -> Result<Self, Box<dyn std::error::Error>>;
+    ) -> Result<(
+        Self::FrG, 
+        Self
+    ), Box<dyn std::error::Error>>;
     fn input_key(
         &mut self, 
         keycode: VirtualKeyCode, 
@@ -42,13 +58,14 @@ pub trait Frame<I, GCd> where
         &mut self, 
         size: winit::dpi::PhysicalSize<u32>, 
     );
-    fn rendering<'r>(
+    fn rendering<'r, 'f>(
         &mut self, 
-        render_chain: super::gfx::RenderingChain<'r, GCd>, 
-    ) -> super::gfx::RenderingChain<'r, GCd>;
+        render_chain: super::gfx::RenderingChain<'r, 'f, GCd, Self::FrG>, 
+    ) -> super::gfx::RenderingChain<'r, 'f, GCd, Self::FrG>;
     fn update(
         &mut self, 
         ctrl: &mut ControlFlow, 
+        fglob: &Self::FrG, 
         gfx: &super::gfx::GfxCtx<GCd>, 
         sfx: &super::sfx::SfxCtx, 
     ) -> Result<(), Box<dyn std::error::Error>>;

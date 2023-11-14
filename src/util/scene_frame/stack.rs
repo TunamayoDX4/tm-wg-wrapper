@@ -30,7 +30,7 @@ impl<S: Scene> SceneStack<S> {
     /// 処理
     pub fn process(
         &mut self, 
-        frame_param: &mut S::Fpr, 
+        fglob: &S::FrG, 
         gfx: &GfxCtx<S::Rdr>, 
         sfx: &SfxCtx, 
     ) -> Result<SceneFrameCtrlParam, Box<dyn std::error::Error>> {
@@ -41,7 +41,7 @@ impl<S: Scene> SceneStack<S> {
                 s.process(
                     top - depth, 
                     depth == top, 
-                    frame_param, 
+                    fglob, 
                     gfx, 
                     sfx, 
                 )
@@ -119,11 +119,10 @@ impl<S: Scene> SceneStack<S> {
     }
 
     /// 描画処理
-    pub fn rendering<'a>(
+    pub fn rendering<'a, 'b>(
         &mut self, 
-        render_chain: RenderingChain<'a, S::Rdr>, 
-        frame_param: &S::Fpr, 
-    ) -> RenderingChain<'a, S::Rdr> {
+        render_chain: RenderingChain<'a, 'b, S::Rdr, S::FrG>, 
+    ) -> RenderingChain<'a, 'b, S::Rdr, S::FrG> {
         let top = self.scenes.len() - 1;
         let mut render_chain = Some(render_chain);
         for (idx, scene) in self.scenes.iter_mut()
@@ -131,13 +130,11 @@ impl<S: Scene> SceneStack<S> {
             .filter(|(idx, s)| s.scene.require_rendering(
                 top - *idx, 
                 top == *idx, 
-                frame_param, 
             ))
         { render_chain = Some(scene.scene.rendering(
             render_chain.take().unwrap(), 
             top - idx, 
             top == idx, 
-            frame_param
         ))}
         render_chain.unwrap()
     }

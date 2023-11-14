@@ -68,7 +68,7 @@ impl<D: Send + Sync> GCData<D> {
             &mut *self.data.write()
         )
     }
-    fn reconfiguer(
+    fn reconfigure(
         &self, 
         winit_ctx: &WinitCtx, 
         wgpu_ctx: &WGPUCtx, 
@@ -236,53 +236,70 @@ impl<D: Send + Sync> GfxCtx<D> {
         );
 
         // データの再コンフィグ
-        self.data.reconfiguer(
+        self.data.reconfigure(
             &self.winit_ctx, 
             &self.wgpu_ctx, 
         );
     }
 
     /// 描画準備
-    pub fn rendering(
+    pub fn rendering<'a, FrG: super::FrameGlobal<D>>(
         &self, 
-    ) -> Result<RenderingChain<D>, SurfaceError> {
+        fglob_ref: &'a FrG, 
+    ) -> Result<RenderingChain<'_, 'a, D, FrG>, SurfaceError> {
         // 出力先の初期化
         let output = self.wgpu_ctx.surface.get_current_texture()?;
         let view = output.texture.create_view(&Default::default());
         self.data.update(&self.winit_ctx, &self.wgpu_ctx);
         
         // チェーンを返す
-        Ok(RenderingChain { gfx: self, output, view })
+        Ok(RenderingChain { 
+            gfx: self, 
+            output, 
+            view, 
+            fglob_ref, 
+        })
     }
 }
 
 /// レンダラ
-pub trait Renderer<GCd: Send + Sync> {
+pub trait Renderer<GCd: Send + Sync, FrG: super::frame::FrameGlobal<GCd>> {
     fn rendering(
         &mut self, 
         output: &SurfaceTexture, 
         view: &TextureView, 
         gfx: &GfxCtx<GCd>, 
+        fglob: &FrG, 
     );
 }
 
 /// 描画先を保持して描画するためのチェーン
-pub struct RenderingChain<'a, GCd: Send + Sync> {
+pub struct RenderingChain<
+    'a, 
+    'b, 
+    GCd: Send + Sync, 
+    FrG: super::FrameGlobal<GCd>, 
+> {
     gfx: &'a GfxCtx<GCd>, 
     output: SurfaceTexture, 
     view: TextureView, 
+    fglob_ref: &'b FrG, 
 }
-impl<'a, GCd: Send + Sync> RenderingChain<'a, GCd> {
+impl<'a, 'b, GCd, FrG> RenderingChain<'a, 'b, GCd, FrG> where
+    GCd: Send + Sync, 
+    FrG: super::FrameGlobal<GCd>, 
+{
 
     /// 描画ループ
     pub fn rendering(
         self, 
-        renderer: &mut impl Renderer<GCd>, 
+        renderer: &mut impl Renderer<GCd, FrG>, 
     ) -> Self {
         renderer.rendering(
             &self.output, 
             &self.view, 
             self.gfx, 
+            self.fglob_ref, 
         );
         self
     }
