@@ -15,6 +15,43 @@ pub struct DrawStringInnerSuccess {
 }
 
 impl super::TypeRenderer {
+    pub(super) fn calc_size_string_inner(
+        &mut self, 
+        vm: &VMetrics, 
+        mut splstr: Split<char>, 
+        auto_returned: Option<&str>,
+        param: &TypeParam,
+        row_size: f32, 
+        column_shift: f32,  
+    ) -> Result<
+        nalgebra::Vector2<f32>, 
+        super::bl_error::BLInsertError, 
+    > { 
+        let str = match auto_returned {
+            Some(str) => str,
+            None => match splstr.next() {
+                Some(str) => str, 
+                None => return Ok([
+                    column_shift, 
+                    row_size
+                ].into())
+            },
+        };
+        let (
+            auto_returned, 
+            size, 
+        ) = self.calc_size(vm, str, param)?;
+
+        self.calc_size_string_inner(
+            vm, 
+            splstr, 
+            auto_returned.map(|(s, _)| s), 
+            param, 
+            row_size.max(size.x), 
+            column_shift + size.y
+        )
+    }
+
     pub(super) fn draw_string_inner(
         &mut self, 
         vm: &VMetrics, 

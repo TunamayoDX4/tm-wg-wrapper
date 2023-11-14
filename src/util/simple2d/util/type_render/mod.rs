@@ -113,6 +113,22 @@ impl TypeRenderer {
         Ok(())
     }
 
+    pub fn calc_string(
+        &mut self, 
+        str: &str, 
+        param: &param::TypeParam, 
+    ) -> Result<
+        nalgebra::Vector2<f32>, 
+        bl_error::BLInsertError, 
+    > { self.calc_size_string_inner(
+        &self.font.v_metrics(self.scale), 
+        str.split('\n'), 
+        None, 
+        param, 
+        0., 
+        0.
+    )}
+
     pub fn draw_string(
         &mut self, 
         str: &str, 
