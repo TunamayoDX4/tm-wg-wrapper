@@ -32,8 +32,8 @@ impl super::TypeRenderer {
             None => match splstr.next() {
                 Some(str) => str, 
                 None => return Ok([
+                    row_size, 
                     column_shift, 
-                    row_size
                 ].into())
             },
         };
