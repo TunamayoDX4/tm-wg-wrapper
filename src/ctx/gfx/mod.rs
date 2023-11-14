@@ -7,7 +7,6 @@ use wgpu::{
     SurfaceConfiguration, 
     SurfaceTexture, 
     TextureView, 
-    SurfaceError, 
 };
 use winit::window::Window;
 
@@ -31,12 +30,12 @@ pub struct GCData<D: Send + Sync> {
         &WinitCtx, 
         &WGPUCtx, 
         &mut D, 
-    )>>, 
+    ) -> Result<(), Box<dyn std::error::Error>>>>, 
     reconfigureer: Mutex<Box<dyn FnMut(
         &WinitCtx, 
         &WGPUCtx, 
         &mut D, 
-    )>>, 
+    ) -> Result<(), Box<dyn std::error::Error>>>>, 
 }
 impl<D: Send + Sync> GCData<D> {
     pub fn new(
@@ -45,12 +44,12 @@ impl<D: Send + Sync> GCData<D> {
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
         reconfigureer: impl FnMut(
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
     ) -> Self { Self {
         data: RwLock::new(data),
         updater: Mutex::new(Box::new(updater)),
@@ -61,7 +60,7 @@ impl<D: Send + Sync> GCData<D> {
         &self, 
         winit_ctx: &WinitCtx, 
         wgpu_ctx: &WGPUCtx, 
-    ) {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         self.updater.lock()(
             winit_ctx, 
             wgpu_ctx, 
@@ -72,13 +71,19 @@ impl<D: Send + Sync> GCData<D> {
         &self, 
         winit_ctx: &WinitCtx, 
         wgpu_ctx: &WGPUCtx, 
-    ) {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         self.reconfigureer.lock()(
             winit_ctx, 
             wgpu_ctx, 
             &mut *self.data.write()
         )
     }
+}
+
+/// GfxCtxの描画時に発生するエラー
+pub enum GfxCtxRenderingError {
+    SurfaceError(wgpu::SurfaceError), 
+    RdrUpdateError(Box<dyn std::error::Error>), 
 }
 
 /// グラフィック機能をまとめるコンテキスト
@@ -93,17 +98,17 @@ impl<D: Send + Sync> GfxCtx<D> {
         dinit: impl FnOnce(
             &WinitCtx, 
             &WGPUCtx, 
-        ) -> D, 
+        ) -> Result<D, Box<dyn std::error::Error>>, 
         dupdater: impl FnMut(
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
         dreconfigureer: impl FnMut(
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
@@ -197,7 +202,7 @@ impl<D: Send + Sync> GfxCtx<D> {
         let data = dinit(
             &winit_ctx, 
             &wgpu_ctx, 
-        );
+        )?;
 
         // 処理成功
         Ok(Self {
@@ -215,7 +220,7 @@ impl<D: Send + Sync> GfxCtx<D> {
     pub fn reconfigure(
         &mut self, 
         new_size: Option<winit::dpi::PhysicalSize<u32>>, 
-    ) {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // ウィンドウの大きさを得る
         let recfg_size = if let Some(new_size) = new_size {
             new_size
@@ -239,18 +244,20 @@ impl<D: Send + Sync> GfxCtx<D> {
         self.data.reconfigure(
             &self.winit_ctx, 
             &self.wgpu_ctx, 
-        );
+        )
     }
 
     /// 描画準備
     pub fn rendering<'a, FrG: super::FrameGlobal<D>>(
         &self, 
         fglob_ref: &'a FrG, 
-    ) -> Result<RenderingChain<'_, 'a, D, FrG>, SurfaceError> {
+    ) -> Result<RenderingChain<'_, 'a, D, FrG>, GfxCtxRenderingError> {
         // 出力先の初期化
-        let output = self.wgpu_ctx.surface.get_current_texture()?;
+        let output = self.wgpu_ctx.surface.get_current_texture()
+            .map_err(|e| GfxCtxRenderingError::SurfaceError(e))?;
         let view = output.texture.create_view(&Default::default());
-        self.data.update(&self.winit_ctx, &self.wgpu_ctx);
+        self.data.update(&self.winit_ctx, &self.wgpu_ctx)
+            .map_err(|e| GfxCtxRenderingError::RdrUpdateError(e))?;
         
         // チェーンを返す
         Ok(RenderingChain { 

@@ -36,17 +36,17 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
         gfx_ctx_data_init: impl FnOnce(
             &gfx::WinitCtx, 
             &gfx::WGPUCtx, 
-        ) -> GCd, 
+        ) -> Result<GCd, Box<dyn std::error::Error>>, 
         dupdater: impl FnMut(
             &gfx::WinitCtx, 
             &gfx::WGPUCtx, 
             &mut GCd, 
-        ) + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
         dreconfigureer: impl FnMut(
             &gfx::WinitCtx, 
             &gfx::WGPUCtx, 
             &mut GCd, 
-        ) + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
@@ -119,9 +119,14 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
                         button, 
                         .. 
                     } => self.frame.input_mouse_button(button, state), 
-                    WindowEvent::Resized(new_size) => {
-                        self.gfx.reconfigure(Some(new_size));
-                        self.frame.window_resizing(new_size);
+                    WindowEvent::Resized(
+                        new_size
+                    ) => match self.gfx.reconfigure(Some(new_size)) {
+                        Ok(_) => self.frame.window_resizing(new_size), 
+                        Err(e) => {
+                            ret = Err(e);
+                            ctrl.set_exit();
+                        }
                     }, 
                     _ => {}, 
                 }, 
@@ -148,12 +153,32 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
                     ) => self.frame.rendering(
                         render_chain
                     ).present(), 
-                    Err(wgpu::SurfaceError::Lost) => self.gfx.reconfigure(None), 
-                    Err(wgpu::SurfaceError::OutOfMemory) => {
+                    Err(gfx::GfxCtxRenderingError::SurfaceError(
+                        wgpu::SurfaceError::Lost
+                    )) => match self.gfx.reconfigure(
+                        None
+                    ) {
+                        Ok(_) => {}, 
+                        Err(e) => {
+                            ret = Err(e);
+                            ctrl.set_exit();
+                        }
+                    }, 
+                    Err(gfx::GfxCtxRenderingError::SurfaceError(
+                        wgpu::SurfaceError::OutOfMemory
+                    )) => {
                         eprintln!("out of memory error occured.");
                         ctrl.set_exit_with_code(-1)
                     }, 
-                    Err(e) => eprintln!("{e:?}"), 
+                    Err(gfx::GfxCtxRenderingError::SurfaceError(
+                        e
+                    )) => eprintln!("{e:?}"), 
+                    Err(gfx::GfxCtxRenderingError::RdrUpdateError(
+                        e
+                    )) => {
+                        ret = Err(e);
+                        ctrl.set_exit();
+                    }
                 }, 
                 // すべてのイベントの処理を終えた時の処理
                 Event::MainEventsCleared => {
