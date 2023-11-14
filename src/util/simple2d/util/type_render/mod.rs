@@ -2,7 +2,7 @@
 
 use rusttype::{Font, Scale};
 use super::super::ImagedShared;
-use crate::ctx::gfx::GfxCtx;
+use crate::ctx::gfx;
 
 pub mod render_core;
 pub mod param;
@@ -33,8 +33,8 @@ pub struct TypeRenderer {
     rdr: render_core::TextRender, 
 }
 impl TypeRenderer {
-    pub fn new<GCd: Send + Sync>(
-        gfx: &GfxCtx<GCd>, 
+    pub fn new(
+        gfx: &gfx::WGPUCtx, 
         font: Font<'static>, 
         scale: Scale, 
         atlas_size: super::atlas::types::SqSize, 

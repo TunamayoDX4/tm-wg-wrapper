@@ -74,8 +74,8 @@ pub struct Texture {
     pub sampler: wgpu::Sampler, 
 }
 impl Texture {
-    pub fn create_bind_group<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn create_bind_group<C: std::ops::Deref<Target = [u8]>>(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         bind_group_layout: &wgpu::BindGroupLayout, 
         sampler: &wgpu::Sampler, 
         image: ImageBuffer<Rgba<u8>, C>, 
@@ -91,7 +91,7 @@ impl Texture {
         };
 
         // 拡散テクスチャのインスタンス生成
-        let texture = gfx.wgpu_ctx.device.create_texture(
+        let texture = gfx.device.create_texture(
             &wgpu::TextureDescriptor {
                 size: tex_size, 
                 mip_level_count: 1, 
@@ -105,7 +105,7 @@ impl Texture {
         );
 
         // GPUのキューにテクスチャ情報を書き込む
-        gfx.wgpu_ctx.queue.write_texture(
+        gfx.queue.write_texture(
             wgpu::ImageCopyTexture {
                 texture: &texture, 
                 mip_level: 0, 
@@ -127,7 +127,7 @@ impl Texture {
         );
 
         // バインドグループの作成
-        (dim, gfx.wgpu_ctx.device.create_bind_group(
+        (dim, gfx.device.create_bind_group(
             &wgpu::BindGroupDescriptor {
                 layout: bind_group_layout, 
                 entries: &[
@@ -145,9 +145,9 @@ impl Texture {
         ))
     }
 
-    pub fn update_image<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
+    pub fn update_image<C: std::ops::Deref<Target = [u8]>>(
         &mut self, 
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         bind_group_layout: &wgpu::BindGroupLayout, 
         image: ImageBuffer<Rgba<u8>, C>, 
     ) -> wgpu::BindGroup {
@@ -164,13 +164,13 @@ impl Texture {
         std::mem::replace(&mut self.bind_group, bind_group)
     }
 
-    pub fn from_image<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn from_image<C: std::ops::Deref<Target = [u8]>>(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         bind_group_layout: &wgpu::BindGroupLayout, 
         image: ImageBuffer<Rgba<u8>, C>, 
     ) -> Self {
         // サンプラの作成
-        let sampler = gfx.wgpu_ctx.device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = gfx.device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge, 
             address_mode_v: wgpu::AddressMode::ClampToEdge, 
             address_mode_w: wgpu::AddressMode::ClampToEdge, 
@@ -194,8 +194,8 @@ impl Texture {
         }
     }
 
-    pub fn new<GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn new(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         bind_group_layout: &wgpu::BindGroupLayout, 
         path: impl AsRef<std::path::Path>, 
     ) -> Result<Self, Box<dyn std::error::Error>> {

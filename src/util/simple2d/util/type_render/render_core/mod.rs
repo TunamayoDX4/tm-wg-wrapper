@@ -18,7 +18,7 @@ use super::super::super::{
     }, 
     Simple2DRender, 
 };
-use crate::ctx::gfx;
+use crate::ctx::gfx::{self, WGPUCtx};
 use wgpu::{
     VertexAttribute, 
     vertex_attr_array, 
@@ -200,8 +200,8 @@ pub struct TextRender {
     instance_buffer: Buffer, 
 }
 impl TextRender {
-    pub fn new<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
-        gfx: &gfx::GfxCtx<GCd>, 
+    pub fn new<C: std::ops::Deref<Target = [u8]>>(
+        gfx: &WGPUCtx, 
         imaged_shared: &ImagedShared, 
         texture: image::ImageBuffer<Rgba<u8>, C>, 
     ) -> Self {
@@ -252,7 +252,7 @@ impl<GCd: Send + Sync> Simple2DRender<GCd> for TextRender {
         shared: Self::Shared<'a>, 
     ) {
         self.instance_buffer = self.instances.finish(
-            gfx, 
+            &gfx.wgpu_ctx, 
             &self.texture
         );
 

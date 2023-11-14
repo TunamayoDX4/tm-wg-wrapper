@@ -54,8 +54,8 @@ impl<K, I> AtlasRenderingModule<K, I> where
         AtlasElemParam,  
     > + Send + Sync, 
 {
-    pub fn new<'a, Q, P, Ii, GCd: Send + Sync>(
-        gfx_ctx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn new<'a, Q, P, Ii>(
+        gfx_ctx: &crate::ctx::gfx::WGPUCtx, 
         imaged: &super::super::ImagedShared, 
         size: SqSize, 
         inserter_initializer: Ii, 
@@ -143,7 +143,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
 
     pub fn update<GCd: Send + Sync>(
         &mut self, 
-        gfx_ctx: &crate::ctx::gfx::GfxCtx<GCd>, 
+        gfx_ctx: &crate::ctx::gfx::WGPUCtx, 
         imaged: &super::super::ImagedShared, 
     ) {
         if self.atlas_modified {
@@ -186,8 +186,8 @@ impl<K, I> AtlasRenderer<K, I> where
         AtlasElemParam, 
     > + Send + Sync, 
 {
-    pub fn new<'a, Q, P, Ii, GCd: Send + Sync>(
-        gfx_ctx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn new<'a, Q, P, Ii>(
+        gfx_ctx: &crate::ctx::gfx::WGPUCtx, 
         imaged: &super::super::ImagedShared, 
         size: SqSize, 
         inserter_initializer: Ii, 
@@ -279,7 +279,7 @@ impl<
         shared: Self::Shared<'a>, 
     ) {
         self.instance_buffer = self.instances.finish(
-            gfx, 
+            &gfx.wgpu_ctx, 
             &self.module
         );
 

@@ -177,8 +177,8 @@ pub struct SqObjRender {
     instance_buffer: Buffer, 
 }
 impl SqObjRender {
-    pub fn new<GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn new(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
     ) -> Self {
 
         // インスタンスの生成
@@ -193,8 +193,8 @@ impl SqObjRender {
         }
     }
 
-    pub fn from_image<GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn from_image(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
 
         // インスタンスの生成
@@ -232,7 +232,7 @@ impl<GCd: Send + Sync> super::Simple2DRender<GCd> for SqObjRender {
         shared: Self::Shared<'a>, 
     ) {
         self.instance_buffer = self.instances.finish(
-            gfx, 
+            &gfx.wgpu_ctx, 
             &()
         );
 

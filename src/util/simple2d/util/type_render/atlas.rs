@@ -195,7 +195,7 @@ impl TypeAtlas {
     ) {
         if self.updated {
             texture.update_image(
-                gfx, 
+                &gfx.wgpu_ctx, 
                 &shared.diffuse, 
                 image::ImageBuffer::from_raw(
                     self.atlas.size().w().get(), 

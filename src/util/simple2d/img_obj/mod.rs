@@ -196,8 +196,8 @@ pub struct ImgObjRender {
     instance_buffer: Buffer, 
 }
 impl ImgObjRender {
-    pub fn new<C: std::ops::Deref<Target = [u8]>, GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn new<C: std::ops::Deref<Target = [u8]>>(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         imaged_shared: &ImagedShared, 
         image: image::ImageBuffer<image::Rgba<u8>, C>, 
     ) -> Self {
@@ -221,8 +221,8 @@ impl ImgObjRender {
         }
     }
 
-    pub fn from_image<GCd: Send + Sync>(
-        gfx: &crate::ctx::gfx::GfxCtx<GCd>, 
+    pub fn from_image(
+        gfx: &crate::ctx::gfx::WGPUCtx, 
         imaged_shared: &ImagedShared, 
         texture: impl AsRef<std::path::Path>, 
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -273,7 +273,7 @@ impl<GCd: Send + Sync> super::Simple2DRender<GCd> for ImgObjRender {
         shared: Self::Shared<'a>, 
     ) {
         self.instance_buffer = self.instances.finish(
-            gfx, 
+            &gfx.wgpu_ctx, 
             &self.texture
         );
 

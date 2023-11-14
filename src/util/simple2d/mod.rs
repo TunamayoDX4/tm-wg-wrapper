@@ -6,7 +6,6 @@ pub mod shared;
 /// レンダラ
 pub mod img_obj;
 pub mod square_obj;
-pub mod font_typing;
 
 pub use instance::{
     Instance, 
