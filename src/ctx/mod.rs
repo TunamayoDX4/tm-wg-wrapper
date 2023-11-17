@@ -41,12 +41,12 @@ impl<I, F: frame::Frame<I, GCd>, GCd> Context<I, F, GCd> where
             &gfx::WinitCtx, 
             &gfx::WGPUCtx, 
             &mut GCd, 
-        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync + 'static, 
         dreconfigureer: impl FnMut(
             &gfx::WinitCtx, 
             &gfx::WGPUCtx, 
             &mut GCd, 
-        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync + 'static, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>

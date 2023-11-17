@@ -30,12 +30,12 @@ pub struct GCData<D: Send + Sync> {
         &WinitCtx, 
         &WGPUCtx, 
         &mut D, 
-    ) -> Result<(), Box<dyn std::error::Error>>>>, 
+    ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync>>, 
     reconfigureer: Mutex<Box<dyn FnMut(
         &WinitCtx, 
         &WGPUCtx, 
         &mut D, 
-    ) -> Result<(), Box<dyn std::error::Error>>>>, 
+    ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync>>, 
 }
 impl<D: Send + Sync> GCData<D> {
     pub fn new(
@@ -44,12 +44,12 @@ impl<D: Send + Sync> GCData<D> {
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync + 'static, 
         reconfigureer: impl FnMut(
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync + 'static, 
     ) -> Self { Self {
         data: RwLock::new(data),
         updater: Mutex::new(Box::new(updater)),
@@ -103,12 +103,12 @@ impl<D: Send + Sync> GfxCtx<D> {
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync + 'static, 
         dreconfigureer: impl FnMut(
             &WinitCtx, 
             &WGPUCtx, 
             &mut D, 
-        ) -> Result<(), Box<dyn std::error::Error>> + 'static, 
+        ) -> Result<(), Box<dyn std::error::Error>> + Send + Sync + 'static, 
     ) -> Result<
         Self, 
         Box<dyn std::error::Error>
