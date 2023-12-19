@@ -41,7 +41,7 @@ pub struct AtlasRenderingModule<K, I> where
         AtlasElemParam, 
     > + Send + Sync, 
 {
-    atlas: Atlas<4, u8, K, AtlasElemParam, I>, 
+    pub atlas: Atlas<4, u8, K, AtlasElemParam, I>, 
     atlas_modified: bool, 
     texture: Texture, 
 }
