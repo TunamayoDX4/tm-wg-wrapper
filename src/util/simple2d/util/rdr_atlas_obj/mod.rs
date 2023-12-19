@@ -54,23 +54,23 @@ impl<K, I> AtlasRenderingModule<K, I> where
         AtlasElemParam,  
     > + Send + Sync, 
 {
-    pub fn new<'a, Q, P, Ii>(
+    pub fn new<Q, P, Ii>(
         gfx_ctx: &crate::ctx::gfx::WGPUCtx, 
         imaged: &super::super::ImagedShared, 
         size: SqSize, 
         inserter_initializer: Ii, 
         image: Option<impl Iterator<Item = (
-            &'a Q, &'a P, 
+            Q, P, 
         )>>, 
     ) -> Result<(
         Self, 
-        Option<impl Iterator<Item = (&'a Q, usize)>>
+        Option<impl Iterator<Item = (Q, usize)>>
     ), error::RdrInitError<
         K, I, Ii
     >> where
-        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + 'a, 
+        Q: Eq + Hash + ToOwned<Owned = K>, 
         K: std::borrow::Borrow<Q>, 
-        P: ?Sized + AsRef<std::path::Path> + 'a, 
+        P: AsRef<std::path::Path>, 
         Ii: AtlasControllerInitializer<
             4, 
             u8, 
@@ -110,7 +110,7 @@ impl<K, I> AtlasRenderingModule<K, I> where
                     .to_rgba8();
                 let id = Self::insert_atlas(
                     &mut atlas, 
-                    name, 
+                    &name, 
                     image, 
                 )?;
                 let Some(
@@ -186,23 +186,23 @@ impl<K, I> AtlasRenderer<K, I> where
         AtlasElemParam, 
     > + Send + Sync, 
 {
-    pub fn new<'a, Q, P, Ii>(
+    pub fn new<Q, P, Ii>(
         gfx_ctx: &crate::ctx::gfx::WGPUCtx, 
         imaged: &super::super::ImagedShared, 
         size: SqSize, 
         inserter_initializer: Ii, 
         image: Option<impl Iterator<Item = (
-            &'a Q, &'a P
+            Q, P
         )>>, 
     ) -> Result<(
         Self, 
-        Option<impl Iterator<Item = (&'a Q, usize)>>, 
+        Option<impl Iterator<Item = (Q, usize)>>, 
     ), 
         error::RdrInitError<K, I, Ii>, 
     > where
-        Q: Eq + Hash + ?Sized + ToOwned<Owned = K> + 'a, 
+        Q: Eq + Hash + ToOwned<Owned = K>, 
         K: std::borrow::Borrow<Q>, 
-        P: ?Sized + AsRef<std::path::Path> + 'a, 
+        P: AsRef<std::path::Path>, 
         Ii: AtlasControllerInitializer<
             4, 
             u8, 
