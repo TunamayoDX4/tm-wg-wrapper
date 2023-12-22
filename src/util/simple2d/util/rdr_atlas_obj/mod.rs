@@ -170,8 +170,8 @@ pub struct AtlasRenderer<K, I> where
        AtlasElemParam, 
     > + Send + Sync, 
 {
-    module: AtlasRenderingModule<K, I>, 
-    instances: InstanceArray<
+    pub module: AtlasRenderingModule<K, I>, 
+    pub instances: InstanceArray<
         AtlasRenderingModule<K, I>, 
         instance::AtlasObjInstance, 
     >, 
