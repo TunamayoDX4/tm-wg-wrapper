@@ -9,7 +9,7 @@ use winit::{
 };
 
 pub trait FrameGlobal<GCd> where
-    Self: Sized + Send + Sync + 'static, 
+    Self: Sized + Send + Sync, 
     GCd: Send + Sync, 
 {
     fn update(
@@ -21,7 +21,7 @@ pub trait FrameGlobal<GCd> where
 
 /// コンテキスト処理を抽象化し、また使いまわしが出来るようにするフレーム
 pub trait Frame<I, GCd> where
-    Self: Sized + Send + Sync + 'static, 
+    Self: Sized + Send + Sync, 
     GCd: Send + Sync, 
 {
     type FrG: FrameGlobal<GCd>;

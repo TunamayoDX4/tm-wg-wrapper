@@ -22,7 +22,7 @@ use winit::{
 pub mod instance;
 pub mod stack;
 
-pub trait Scene: Sized + Send + Sync + 'static {
+pub trait Scene: Sized + Send + Sync {
     type InitV;
     type Rdr: Send + Sync;
     type FrG: Send + Sync + crate::ctx::frame::FrameGlobal<
